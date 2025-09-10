@@ -111,13 +111,16 @@ class DummyDataSeeder extends Seeder
 
         $createdLearners = [];
         foreach ($learners as $learnerData) {
-            $learner = User::create(array_merge($learnerData, [
-                'company_id' => $company->id,
-                'password' => bcrypt('password'),
-                'email_verified_at' => now(),
-                'is_learner' => true,
-                'is_employee' => false,
-            ]));
+            $learner = User::firstOrCreate(
+                ['email' => $learnerData['email']],
+                array_merge($learnerData, [
+                    'company_id' => $company->id,
+                    'password' => bcrypt('password'),
+                    'email_verified_at' => now(),
+                    'is_learner' => true,
+                    'is_employee' => false,
+                ])
+            );
 
             // Assign learner role
             $learner->assignRole('learner');
@@ -126,17 +129,20 @@ class DummyDataSeeder extends Seeder
         }
 
         // Create company admin user
-        $admin = User::create([
-            'first_name' => 'Admin',
-            'last_name' => 'User',
-            'email' => 'admin@company.com',
-            'employee_number' => 'ADMIN001',
-            'company_id' => $company->id,
-            'password' => bcrypt('password'),
-            'email_verified_at' => now(),
-            'is_learner' => false,
-            'is_employee' => true,
-        ]);
+        $admin = User::firstOrCreate(
+            ['employee_number' => 'ADMIN001'],
+            [
+                'first_name' => 'Admin',
+                'last_name' => 'User',
+                'email' => 'admin@company.com',
+                'employee_number' => 'ADMIN001',
+                'company_id' => $company->id,
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+                'is_learner' => false,
+                'is_employee' => true,
+            ]
+        );
 
         // Assign admin role
         $admin->assignRole('company_admin');

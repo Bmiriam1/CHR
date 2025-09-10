@@ -37,12 +37,12 @@ class ComplianceTestSeeder extends Seeder
     {
         $programTypes = [
             ['name' => 'Learnership', 'slug' => 'learnership'],
-            ['name' => 'Skills Programme', 'slug' => 'skills-programme'], 
+            ['name' => 'Skills Programme', 'slug' => 'skills-programme'],
             ['name' => 'Internship', 'slug' => 'internship'],
         ];
 
         foreach ($programTypes as $type) {
-            ProgramType::create($type);
+            ProgramType::firstOrCreate(['slug' => $type['slug']], $type);
         }
     }
 
@@ -96,7 +96,7 @@ class ComplianceTestSeeder extends Seeder
         ];
 
         foreach ($companies as $companyData) {
-            Company::create($companyData);
+            Company::firstOrCreate(['tenant_key' => $companyData['tenant_key']], $companyData);
         }
     }
 
@@ -114,38 +114,42 @@ class ComplianceTestSeeder extends Seeder
             $admin = $adminData[$index];
             $firstName = explode(' ', $admin['name'])[0];
             $lastName = explode(' ', $admin['name'])[1] ?? 'Admin';
-            
-            User::create([
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'email' => $company->email,
-                'email_verified_at' => now(),
-                'password' => Hash::make('password'),
-                'phone' => $company->phone,
-                'id_number' => $admin['id_number'],
-                'birth_date' => '1980-01-01',
-                'gender' => 'female',
-                'marital_status' => 'married',
-                'citizenship_status' => 'citizen',
-                'employee_number' => 'ADMIN' . str_pad($company->id, 3, '0', STR_PAD_LEFT),
-                'employment_start_date' => '2020-01-15',
-                'employment_status' => 'active',
-                'employment_basis' => 'full_time',
-                'is_employee' => true,
-                'occupation' => 'CEO',
-                'bank_name' => 'Standard Bank',
-                'bank_account_number' => '123456789' . $company->id,
-                'bank_branch_code' => '051001',
-                'tax_number' => '901234567' . $company->id,
-                'res_addr_line1' => $company->physical_address_line1,
-                'res_suburb' => $company->physical_suburb,
-                'res_city' => $company->physical_city,
-                'res_postcode' => $company->physical_postal_code,
-                'post_addr_line1' => $company->postal_address_line1,
-                'post_suburb' => $company->postal_suburb,
-                'post_city' => $company->postal_city,
-                'post_postcode' => $company->postal_code,
-            ]);
+
+            User::firstOrCreate(
+                ['employee_number' => 'ADMIN' . str_pad($company->id, 3, '0', STR_PAD_LEFT)],
+                [
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'email' => $company->email,
+                    'email_verified_at' => now(),
+                    'password' => Hash::make('password'),
+                    'phone' => $company->phone,
+                    'id_number' => $admin['id_number'],
+                    'birth_date' => '1980-01-01',
+                    'gender' => 'female',
+                    'marital_status' => 'married',
+                    'citizenship_status' => 'citizen',
+                    'employee_number' => 'ADMIN' . str_pad($company->id, 3, '0', STR_PAD_LEFT),
+                    'employment_start_date' => '2020-01-15',
+                    'employment_status' => 'active',
+                    'employment_basis' => 'full_time',
+                    'is_employee' => true,
+                    'occupation' => 'CEO',
+                    'bank_name' => 'Standard Bank',
+                    'bank_account_number' => '123456789' . $company->id,
+                    'bank_branch_code' => '051001',
+                    'tax_number' => '901234567' . $company->id,
+                    'res_addr_line1' => $company->physical_address_line1,
+                    'res_suburb' => $company->physical_suburb,
+                    'res_city' => $company->physical_city,
+                    'res_postcode' => $company->physical_postal_code,
+                    'post_addr_line1' => $company->postal_address_line1,
+                    'post_suburb' => $company->postal_suburb,
+                    'post_city' => $company->postal_city,
+                    'post_postcode' => $company->postal_code,
+                    'company_id' => $company->id,
+                ]
+            );
         }
 
         // Create learner users
@@ -200,38 +204,42 @@ class ComplianceTestSeeder extends Seeder
         foreach ($learnerData as $index => $data) {
             $company = $companies[$index % $companies->count()];
 
-            User::create([
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-                'email' => $data['email'],
-                'email_verified_at' => now(),
-                'password' => Hash::make('password'),
-                'phone' => $data['phone_number'],
-                'id_number' => $data['id_number'],
-                'birth_date' => $data['date_of_birth'],
-                'gender' => $data['gender'],
-                'marital_status' => 'single',
-                'citizenship_status' => 'citizen',
-                'employee_number' => 'L' . str_pad(($index + 1), 4, '0', STR_PAD_LEFT),
-                'employment_start_date' => Carbon::now()->subMonths(6)->toDateString(),
-                'employment_status' => 'active',
-                'employment_basis' => 'learner',
-                'is_learner' => true,
-                'occupation' => 'Trainee',
-                'bank_name' => ['FNB', 'ABSA', 'Nedbank'][rand(0, 2)],
-                'bank_account_number' => '620' . str_pad(rand(1000000, 9999999), 7, '0'),
-                'bank_branch_code' => ['250655', '632005', '198765'][rand(0, 2)],
-                'tax_number' => '901' . str_pad(($index + 1) * 123456, 6, '0'),
-                'eti_eligible' => true,
-                'res_addr_line1' => 'Township Address ' . ($index + 1),
-                'res_suburb' => 'Soweto',
-                'res_city' => 'Johannesburg',
-                'res_postcode' => '1809',
-                'post_addr_line1' => 'PO Box ' . ($index + 100),
-                'post_suburb' => 'Soweto',
-                'post_city' => 'Johannesburg',
-                'post_postcode' => '1800',
-            ]);
+            User::firstOrCreate(
+                ['employee_number' => 'L' . str_pad(($index + 1), 4, '0', STR_PAD_LEFT)],
+                [
+                    'first_name' => $data['first_name'],
+                    'last_name' => $data['last_name'],
+                    'email' => $data['email'],
+                    'email_verified_at' => now(),
+                    'password' => Hash::make('password'),
+                    'phone' => $data['phone_number'],
+                    'id_number' => $data['id_number'],
+                    'birth_date' => $data['date_of_birth'],
+                    'gender' => $data['gender'],
+                    'marital_status' => 'single',
+                    'citizenship_status' => 'citizen',
+                    'employee_number' => 'L' . str_pad(($index + 1), 4, '0', STR_PAD_LEFT),
+                    'employment_start_date' => Carbon::now()->subMonths(6)->toDateString(),
+                    'employment_status' => 'active',
+                    'employment_basis' => 'learner',
+                    'is_learner' => true,
+                    'occupation' => 'Trainee',
+                    'bank_name' => ['FNB', 'ABSA', 'Nedbank'][rand(0, 2)],
+                    'bank_account_number' => '620' . str_pad(rand(1000000, 9999999), 7, '0'),
+                    'bank_branch_code' => ['250655', '632005', '198765'][rand(0, 2)],
+                    'tax_number' => '901' . str_pad(($index + 1) * 123456, 6, '0'),
+                    'eti_eligible' => true,
+                    'res_addr_line1' => 'Township Address ' . ($index + 1),
+                    'res_suburb' => 'Soweto',
+                    'res_city' => 'Johannesburg',
+                    'res_postcode' => '1809',
+                    'post_addr_line1' => 'PO Box ' . ($index + 100),
+                    'post_suburb' => 'Soweto',
+                    'post_city' => 'Johannesburg',
+                    'post_postcode' => '1800',
+                    'company_id' => $company->id,
+                ]
+            );
         }
     }
 
@@ -279,11 +287,18 @@ class ComplianceTestSeeder extends Seeder
         foreach ($programsData as $index => $data) {
             $company = $companies[$index % $companies->count()];
 
-            Program::create(array_merge($data, [
-                'company_id' => $company->id,
-                'program_type_id' => 1, // Default program type - would need to create program types table
-                'status' => 'active',
-            ]));
+            // Make program code unique per company
+            $uniqueProgramCode = $data['program_code'] . '-' . $company->id;
+
+            Program::firstOrCreate(
+                ['program_code' => $uniqueProgramCode],
+                array_merge($data, [
+                    'program_code' => $uniqueProgramCode,
+                    'company_id' => $company->id,
+                    'program_type_id' => 1, // Default program type - would need to create program types table
+                    'status' => 'active',
+                ])
+            );
         }
     }
 
@@ -292,23 +307,26 @@ class ComplianceTestSeeder extends Seeder
         $learners = User::where('is_learner', true)->get();
 
         foreach ($learners as $learner) {
-            Device::create([
-                'user_id' => $learner->id,
-                'device_name' => $learner->first_name . "'s Phone",
-                'device_type' => 'mobile',
-                'platform' => ['iOS', 'Android'][rand(0, 1)],
-                'platform_version' => ['14.0', '15.0', 'Android 11', 'Android 12'][rand(0, 3)],
-                'app_version' => '1.0.0',
-                'expo_push_token' => 'ExponentPushToken[' . bin2hex(random_bytes(22)) . ']',
-                'push_notifications_enabled' => true,
-                'supports_qr_scanning' => true,
-                'supports_gps' => true,
-                'supports_camera' => true,
-                'is_active' => true,
-                'is_trusted' => true,
-                'first_seen_at' => Carbon::now()->subMonths(6),
-                'last_seen_at' => Carbon::now()->subDays(rand(1, 7)),
-            ]);
+            Device::firstOrCreate(
+                ['user_id' => $learner->id],
+                [
+                    'user_id' => $learner->id,
+                    'device_name' => $learner->first_name . "'s Phone",
+                    'device_type' => 'mobile',
+                    'platform' => ['iOS', 'Android'][rand(0, 1)],
+                    'platform_version' => ['14.0', '15.0', 'Android 11', 'Android 12'][rand(0, 3)],
+                    'app_version' => '1.0.0',
+                    'expo_push_token' => 'ExponentPushToken[' . bin2hex(random_bytes(22)) . ']',
+                    'push_notifications_enabled' => true,
+                    'supports_qr_scanning' => true,
+                    'supports_gps' => true,
+                    'supports_camera' => true,
+                    'is_active' => true,
+                    'is_trusted' => true,
+                    'first_seen_at' => Carbon::now()->subMonths(6),
+                    'last_seen_at' => Carbon::now()->subDays(rand(1, 7)),
+                ]
+            );
         }
     }
 

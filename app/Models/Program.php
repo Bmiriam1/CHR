@@ -1,0 +1,346 @@
+<?php
+
+namespace App\Models;
+
+use App\Traits\HasTenant;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Program extends Model
+{
+    use HasFactory, HasTenant, SoftDeletes;
+
+    /**
+     * The attributes that are mass assignable.
+     */
+    protected $fillable = [
+        // Basic info
+        'title',
+        'program_code',
+        'description',
+        'image',
+
+        // Relationships
+        'company_id',
+        'client_id',
+        'branch_id',
+        'program_type_id',
+
+        // Dates
+        'start_date',
+        'end_date',
+        'enrollment_start_date',
+        'enrollment_end_date',
+        'duration_months',
+        'duration_weeks',
+        'total_training_days',
+
+        // Financial
+        'daily_rate',
+        'monthly_stipend',
+        'transport_allowance',
+        'meal_allowance',
+        'accommodation_allowance',
+        'other_allowance',
+        'other_allowance_description',
+        'payment_frequency',
+        'payment_day_of_month',
+
+        // Compliance
+        'section_12h_eligible',
+        'section_12h_contract_number',
+        'section_12h_start_date',
+        'section_12h_end_date',
+        'section_12h_allowance',
+        'eti_eligible_program',
+        'eti_category',
+        'nqf_level',
+        'saqa_id',
+        'qualification_title',
+
+        // Logistics
+        'location_type',
+        'venue',
+        'venue_address',
+        'max_learners',
+        'min_learners',
+        'enrolled_count',
+
+        // BBBEE
+        'bbbee_category',
+        'is_client_hosting',
+        'specific_requirements',
+
+        // Metrics
+        'learner_retention_rate',
+        'completion_rate',
+        'placement_rate',
+
+        // Staff
+        'coordinator_id',
+        'creator_id',
+
+        // Status
+        'status',
+        'is_approved',
+        'approved_at',
+        'approved_by',
+
+        // System
+        'sort_order',
+        'additional_settings',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     */
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'enrollment_start_date' => 'date',
+        'enrollment_end_date' => 'date',
+        'daily_rate' => 'decimal:2',
+        'monthly_stipend' => 'decimal:2',
+        'transport_allowance' => 'decimal:2',
+        'meal_allowance' => 'decimal:2',
+        'accommodation_allowance' => 'decimal:2',
+        'other_allowance' => 'decimal:2',
+        'section_12h_eligible' => 'boolean',
+        'section_12h_start_date' => 'date',
+        'section_12h_end_date' => 'date',
+        'section_12h_allowance' => 'decimal:2',
+        'eti_eligible_program' => 'boolean',
+        'is_approved' => 'boolean',
+        'approved_at' => 'datetime',
+        'additional_settings' => 'array',
+    ];
+
+    /**
+     * Get the company that owns this program.
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * Get the client this program belongs to.
+     */
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * Get the branch this program belongs to.
+     */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(CompanyBranch::class, 'branch_id');
+    }
+
+    /**
+     * Get the program type.
+     */
+    public function programType(): BelongsTo
+    {
+        return $this->belongsTo(ProgramType::class);
+    }
+
+    /**
+     * Get the program coordinator.
+     */
+    public function coordinator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'coordinator_id');
+    }
+
+    /**
+     * Get the user who created this program.
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'creator_id');
+    }
+
+    /**
+     * Get the user who approved this program.
+     */
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Get all learners enrolled in this program.
+     */
+    public function learners(): HasMany
+    {
+        return $this->hasMany(User::class)->where('is_learner', true);
+    }
+
+    /**
+     * Get all schedules for this program.
+     */
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Schedule::class);
+    }
+
+    /**
+     * Check if the program is active.
+     */
+    public function isActive(): bool
+    {
+        return $this->status === 'active' && $this->is_approved;
+    }
+
+    /**
+     * Check if the program is completed.
+     */
+    public function isCompleted(): bool
+    {
+        return $this->status === 'completed' || $this->end_date?->isPast();
+    }
+
+    /**
+     * Check if enrollment is open.
+     */
+    public function isEnrollmentOpen(): bool
+    {
+        $now = now();
+
+        return $this->isActive() &&
+            ($this->enrollment_start_date === null || $now->gte($this->enrollment_start_date)) &&
+            ($this->enrollment_end_date === null || $now->lte($this->enrollment_end_date)) &&
+            $this->enrolled_count < $this->max_learners;
+    }
+
+    /**
+     * Check if program is eligible for Section 12H allowances.
+     */
+    public function isSection12hEligible(): bool
+    {
+        return $this->section_12h_eligible &&
+            $this->section_12h_contract_number &&
+            $this->section_12h_start_date &&
+            $this->section_12h_end_date;
+    }
+
+    /**
+     * Check if program is ETI eligible.
+     */
+    public function isEtiEligible(): bool
+    {
+        return $this->eti_eligible_program && $this->company->hasEtiEnabled();
+    }
+
+    /**
+     * Get total program value (daily rate × total training days).
+     */
+    public function getTotalValue(): float
+    {
+        if (!$this->total_training_days || !$this->daily_rate) {
+            return 0;
+        }
+
+        return $this->daily_rate * $this->total_training_days;
+    }
+
+    /**
+     * Get total allowances per day.
+     */
+    public function getDailyAllowances(): float
+    {
+        return $this->transport_allowance +
+            $this->meal_allowance +
+            $this->accommodation_allowance +
+            $this->other_allowance;
+    }
+
+    /**
+     * Get total daily payment (rate + allowances).
+     */
+    public function getTotalDailyPayment(): float
+    {
+        return $this->daily_rate + $this->getDailyAllowances();
+    }
+
+    /**
+     * Get remaining enrollment spots.
+     */
+    public function getRemainingSpots(): int
+    {
+        return max(0, $this->max_learners - $this->enrolled_count);
+    }
+
+    /**
+     * Get program duration in days.
+     */
+    public function getDurationInDays(): int
+    {
+        if ($this->total_training_days) {
+            return $this->total_training_days;
+        }
+
+        if ($this->start_date && $this->end_date) {
+            return $this->start_date->diffInDays($this->end_date) + 1;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Get program status badge color.
+     */
+    public function getStatusColor(): string
+    {
+        return match ($this->status) {
+            'draft' => 'gray',
+            'pending_approval' => 'yellow',
+            'approved' => 'blue',
+            'active' => 'green',
+            'completed' => 'purple',
+            'cancelled' => 'red',
+            default => 'gray',
+        };
+    }
+
+    /**
+     * Scope to get active programs.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active')->where('is_approved', true);
+    }
+
+    /**
+     * Scope to get programs available for enrollment.
+     */
+    public function scopeAvailableForEnrollment($query)
+    {
+        $now = now();
+
+        return $query->active()
+            ->where(function ($q) use ($now) {
+                $q->whereNull('enrollment_start_date')
+                    ->orWhere('enrollment_start_date', '<=', $now);
+            })
+            ->where(function ($q) use ($now) {
+                $q->whereNull('enrollment_end_date')
+                    ->orWhere('enrollment_end_date', '>=', $now);
+            })
+            ->whereRaw('enrolled_count < max_learners');
+    }
+
+    /**
+     * Scope to get programs by status.
+     */
+    public function scopeStatus($query, string $status)
+    {
+        return $query->where('status', $status);
+    }
+}

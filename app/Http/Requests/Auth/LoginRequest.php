@@ -29,6 +29,7 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
+            'role' => ['nullable', 'string', 'in:learner,company'],
         ];
     }
 
@@ -47,6 +48,26 @@ class LoginRequest extends FormRequest
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
             ]);
+        }
+
+        // Check if user has the required role
+        $user = Auth::user();
+        $requiredRole = $this->input('role');
+
+        if ($requiredRole) {
+            if ($requiredRole === 'learner' && !$user->hasRole('learner')) {
+                Auth::logout();
+                throw ValidationException::withMessages([
+                    'email' => 'This account is not authorized for learner access.',
+                ]);
+            }
+
+            if ($requiredRole === 'company' && !$user->hasAnyRole(['admin', 'hr_manager', 'company_admin'])) {
+                Auth::logout();
+                throw ValidationException::withMessages([
+                    'email' => 'This account is not authorized for company access.',
+                ]);
+            }
         }
 
         RateLimiter::clear($this->throttleKey());
@@ -80,6 +101,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('email')) . '|' . $this->ip());
     }
 }

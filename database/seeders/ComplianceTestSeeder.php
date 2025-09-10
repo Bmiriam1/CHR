@@ -115,7 +115,7 @@ class ComplianceTestSeeder extends Seeder
             $firstName = explode(' ', $admin['name'])[0];
             $lastName = explode(' ', $admin['name'])[1] ?? 'Admin';
 
-            User::firstOrCreate(
+            $adminUser = User::firstOrCreate(
                 ['employee_number' => 'ADMIN' . str_pad($company->id, 3, '0', STR_PAD_LEFT)],
                 [
                     'first_name' => $firstName,
@@ -150,6 +150,9 @@ class ComplianceTestSeeder extends Seeder
                     'company_id' => $company->id,
                 ]
             );
+
+            // Assign admin role
+            $adminUser->assignRole('company_admin');
         }
 
         // Create learner users
@@ -204,7 +207,7 @@ class ComplianceTestSeeder extends Seeder
         foreach ($learnerData as $index => $data) {
             $company = $companies[$index % $companies->count()];
 
-            User::firstOrCreate(
+            $learnerUser = User::firstOrCreate(
                 ['employee_number' => 'L' . str_pad(($index + 1), 4, '0', STR_PAD_LEFT)],
                 [
                     'first_name' => $data['first_name'],
@@ -240,6 +243,9 @@ class ComplianceTestSeeder extends Seeder
                     'company_id' => $company->id,
                 ]
             );
+
+            // Assign learner role
+            $learnerUser->assignRole('learner');
         }
     }
 
@@ -284,21 +290,23 @@ class ComplianceTestSeeder extends Seeder
             ]
         ];
 
-        foreach ($programsData as $index => $data) {
-            $company = $companies[$index % $companies->count()];
+        foreach ($companies as $company) {
+            foreach ($programsData as $data) {
+                // Make program code unique per company
+                $uniqueProgramCode = $data['program_code'] . '-' . $company->id;
 
-            // Make program code unique per company
-            $uniqueProgramCode = $data['program_code'] . '-' . $company->id;
+                $this->command->info("Creating program: {$uniqueProgramCode} for company: {$company->id}");
 
-            Program::firstOrCreate(
-                ['program_code' => $uniqueProgramCode],
-                array_merge($data, [
-                    'program_code' => $uniqueProgramCode,
-                    'company_id' => $company->id,
-                    'program_type_id' => 1, // Default program type - would need to create program types table
-                    'status' => 'active',
-                ])
-            );
+                Program::withoutGlobalScope(\App\Scopes\TenantScope::class)->firstOrCreate(
+                    ['program_code' => $uniqueProgramCode],
+                    array_merge($data, [
+                        'program_code' => $uniqueProgramCode,
+                        'company_id' => $company->id,
+                        'program_type_id' => 1, // Default program type - would need to create program types table
+                        'status' => 'active',
+                    ])
+                );
+            }
         }
     }
 

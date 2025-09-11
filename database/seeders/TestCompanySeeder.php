@@ -2,14 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\Program;
 use App\Models\ProgramType;
-use App\Models\Payslip;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 
 class TestCompanySeeder extends Seeder
@@ -49,7 +46,7 @@ class TestCompanySeeder extends Seeder
         );
 
         // Create learner user
-        $learner = User::firstOrCreate(
+        User::firstOrCreate(
             ['email' => 'learner@connecthr.co.za'],
             [
                 'first_name' => 'Michaela',
@@ -86,7 +83,7 @@ class TestCompanySeeder extends Seeder
         );
 
         // Create test program
-        $program = Program::firstOrCreate(
+        Program::firstOrCreate(
             ['program_code' => 'DSDP2024'],
             [
                 'title' => 'Digital Skills Development Program',
@@ -124,119 +121,10 @@ class TestCompanySeeder extends Seeder
                 'updated_at' => now(),
             ]
         );
-    }
 
-    /**
-     * Create payslips for testing IRP5 export.
-     */
-    private function createPayslips($company, $learners, $program)
-    {
-        // Create payslips for March 2024 to December 2024 (partial tax year for testing)
-        $months = [
-            '2024-03-01',
-            '2024-04-01',
-            '2024-05-01',
-            '2024-06-01',
-            '2024-07-01',
-            '2024-08-01',
-            '2024-09-01',
-            '2024-10-01',
-            '2024-11-01',
-            '2024-12-01'
-        ];
-
-        foreach ($learners as $learner) {
-            foreach ($months as $monthStart) {
-                $payDate = Carbon::parse($monthStart)->endOfMonth();
-
-                // Calculate monthly amounts
-                $grossSalary = $program->daily_rate * 22; // 22 working days
-                $transportAllowance = $program->transport_allowance * 22;
-                $totalGross = $grossSalary + $transportAllowance;
-
-                // Tax calculations (simplified)
-                $taxableEarnings = $grossSalary; // Transport not taxable up to limit
-                $payeTax = $this->calculatePAYE($taxableEarnings);
-                $uifEmployee = min($taxableEarnings * 0.01, 177.12); // 1% capped at R177.12
-                $uifEmployer = $uifEmployee; // Employer matches
-                $sdlContribution = $taxableEarnings * 0.01; // 1% SDL
-
-                // ETI benefit calculation (youth employment incentive)
-                $etiMonth = Carbon::parse($monthStart)->diffInMonths(Carbon::parse($learner->employment_start_date));
-                $etiBenefit = 0;
-                if ($etiMonth < 12) {
-                    $etiBenefit = min(1000, $payeTax); // R1000 or PAYE, whichever is lower
-                } elseif ($etiMonth < 24) {
-                    $etiBenefit = min(500, $payeTax); // R500 or PAYE, whichever is lower
-                }
-
-                $netPayeTax = max(0, $payeTax - $etiBenefit);
-                $totalDeductions = $netPayeTax + $uifEmployee;
-                $netAmount = $totalGross - $totalDeductions;
-
-                Payslip::create([
-                    'user_id' => $learner->id,
-                    'company_id' => $company->id,
-                    'program_id' => $program->id,
-                    'payslip_number' => 'PAY-' . $learner->id . '-' . Carbon::parse($monthStart)->format('Y-m'),
-                    'payroll_period_start' => $monthStart,
-                    'payroll_period_end' => Carbon::parse($monthStart)->endOfMonth()->toDateString(),
-                    'pay_date' => $payDate->toDateString(),
-                    'gross_salary' => $grossSalary,
-                    'transport_allowance' => $transportAllowance,
-                    'total_gross' => $totalGross,
-                    'taxable_earnings' => $taxableEarnings,
-                    'paye_tax' => $payeTax,
-                    'uif_employee' => $uifEmployee,
-                    'uif_employer' => $uifEmployer,
-                    'uif_contribution_base' => $taxableEarnings,
-                    'sdl_contribution' => $sdlContribution,
-                    'eti_benefit' => $etiBenefit,
-                    'total_deductions' => $totalDeductions,
-                    'net_amount' => $netAmount,
-                    'status' => 'paid',
-                    'is_final' => true,
-                    // SARS codes for IRP5
-                    'sars_3601' => $taxableEarnings, // Taxable income
-                    'sars_3605' => 0, // Other income
-                    'sars_3615' => 0, // Pension fund contributions
-                    'sars_3617' => 0, // Retirement annuity contributions
-                    'sars_3627' => 0, // Medical aid contributions
-                    'sars_3699' => $payeTax, // PAYE deducted
-                    'created_at' => Carbon::parse($monthStart),
-                    'updated_at' => Carbon::parse($monthStart),
-                ]);
-            }
-        }
-    }
-
-    /**
-     * Calculate PAYE tax (simplified South African tax calculation).
-     */
-    private function calculatePAYE($monthlyTaxableIncome)
-    {
-        // 2024/2025 tax brackets (monthly)
-        $annualIncome = $monthlyTaxableIncome * 12;
-
-        if ($annualIncome <= 95750) {
-            return 0; // Tax-free threshold
-        } elseif ($annualIncome <= 237100) {
-            $monthlyTax = (($annualIncome - 95750) * 0.18) / 12;
-        } elseif ($annualIncome <= 370500) {
-            $monthlyTax = ((25443 + (($annualIncome - 237100) * 0.26)) / 12);
-        } elseif ($annualIncome <= 512800) {
-            $monthlyTax = ((60132 + (($annualIncome - 370500) * 0.31)) / 12);
-        } elseif ($annualIncome <= 673000) {
-            $monthlyTax = ((104245 + (($annualIncome - 512800) * 0.36)) / 12);
-        } elseif ($annualIncome <= 857900) {
-            $monthlyTax = ((161917 + (($annualIncome - 673000) * 0.39)) / 12);
-        } else {
-            $monthlyTax = ((234216 + (($annualIncome - 857900) * 0.41)) / 12);
-        }
-
-        // Apply primary rebate (monthly)
-        $primaryRebate = 17235 / 12; // R17,235 annually
-
-        return max(0, $monthlyTax - $primaryRebate);
+        $this->command->info('Test company and users created successfully!');
+        $this->command->info('Admin: admin@connecthr.co.za (password: password)');
+        $this->command->info('Learner: learner@connecthr.co.za (password: password)');
+        $this->command->info('Company PAYE Reference: 7123456789');
     }
 }

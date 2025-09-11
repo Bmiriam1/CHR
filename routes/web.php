@@ -15,6 +15,15 @@ use App\Http\Controllers\SimCardController;
 use App\Http\Controllers\LeaveRequestController;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application.
+|
+*/
+
 // Role-based Login (for direct access)
 Route::get('/login/{role}', function ($role) {
     if (!in_array($role, ['learner', 'company'])) {
@@ -23,6 +32,7 @@ Route::get('/login/{role}', function ($role) {
     return view('auth.login-role', compact('role'));
 })->name('login.role');
 
+// Landing / Home
 Route::get('/', function () {
     if (auth()->check()) {
         $user = auth()->user();
@@ -41,6 +51,7 @@ Route::get('/', function () {
     return redirect()->route('login');
 })->name('home');
 
+// Dashboard
 Route::get('/dashboard', function () {
     $user = auth()->user();
 
@@ -55,6 +66,7 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -69,7 +81,7 @@ Route::middleware('auth')->group(function () {
     Route::post('programs/{program}/duplicate', [ProgramController::class, 'duplicate'])->name('programs.duplicate');
     Route::patch('programs/{program}/activate', [ProgramController::class, 'activate'])->name('programs.activate');
     Route::patch('programs/{program}/deactivate', [ProgramController::class, 'deactivate'])->name('programs.deactivate');
-    
+
     // Program additional functionality
     Route::get('programs/{program}/schedules', [ProgramController::class, 'schedules'])->name('programs.schedules');
     Route::get('programs/{program}/progress', [ProgramController::class, 'progress'])->name('programs.progress');
@@ -114,8 +126,14 @@ Route::middleware('auth')->group(function () {
 
     // Payslip Management
     Route::resource('payslips', PayslipController::class);
-    Route::get('payslips/generate/form', [PayslipController::class, 'generateForm'])->name('payslips.generate');
-    Route::post('payslips/generate', [PayslipController::class, 'generate'])->name('payslips.generate');
+
+    // Distinct route names to avoid duplication
+    Route::get('payslips/generate/form', [PayslipController::class, 'generateForm'])
+        ->name('payslips.generate.form'); // GET form
+
+    Route::post('payslips/generate', [PayslipController::class, 'generate'])
+        ->name('payslips.generate');      // POST action
+
     Route::patch('payslips/{payslip}/approve', [PayslipController::class, 'approve'])->name('payslips.approve');
     Route::patch('payslips/{payslip}/mark-paid', [PayslipController::class, 'markAsPaid'])->name('payslips.mark-paid');
     Route::get('payslips/{payslip}/download', [PayslipController::class, 'download'])->name('payslips.download');
@@ -130,15 +148,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [LeaveRequestController::class, 'store'])->name('store');
         Route::get('/{leaveRequest}', [LeaveRequestController::class, 'show'])->name('show');
         Route::patch('/{leaveRequest}/cancel', [LeaveRequestController::class, 'cancel'])->name('cancel');
-        
+
         // Management functions (HR/Admin)
         Route::get('/manage/dashboard', [LeaveRequestController::class, 'manage'])->name('manage');
         Route::patch('/{leaveRequest}/approve', [LeaveRequestController::class, 'approve'])->name('approve');
         Route::patch('/{leaveRequest}/reject', [LeaveRequestController::class, 'reject'])->name('reject');
-        
+
         // SARS reporting
         Route::get('/reports/sars', [LeaveRequestController::class, 'sarsReport'])->name('sars-report');
-        
+
         // Admin functions
         Route::post('/admin/initialize-balances', [LeaveRequestController::class, 'initializeBalances'])->name('initialize-balances');
     });
@@ -207,6 +225,7 @@ Route::middleware('auth')->group(function () {
     Route::get('analytics/export', [AnalyticsController::class, 'export'])->name('analytics.export');
 });
 
+// Auth scaffolding
 require __DIR__ . '/auth.php';
 
 // Override default login route with custom role selection

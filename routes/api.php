@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AttendanceApiController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ClientController;
 
 // Public authentication routes
 Route::prefix('auth')->group(function () {
@@ -28,26 +29,26 @@ Route::middleware('auth:sanctum')->group(function () {
 // Attendance API Routes
 Route::middleware('auth:sanctum')->group(function () {
     // Check-in/out
+    Route::post('/attendance/check-in', [AttendanceApiController::class, 'checkIn']);
+    Route::post('/attendance/check-out', [AttendanceApiController::class, 'checkOut']);
 
+    // Programs
+    Route::get('/programs', [AttendanceApiController::class, 'getPrograms']);
+    Route::get('/programs/with-schedules', [AttendanceApiController::class, 'getProgramsWithSchedules']);
+    Route::get('/user/programs', [AttendanceApiController::class, 'getUserPrograms']);
+    Route::get('/user/primary-program', [AttendanceApiController::class, 'getPrimaryProgram']);
+
+    // Schedules
+    Route::get('/schedule/current', [AttendanceApiController::class, 'getCurrentSchedule']);
+
+    // Hosts and Locations
+    Route::get('/hosts', [AttendanceApiController::class, 'getHosts']);
+    Route::get('/hosts/nearest', [AttendanceApiController::class, 'getNearestHost']);
+    Route::post('/hosts/validate-qr', [AttendanceApiController::class, 'validateQRCode']);
+
+    // Attendance data
+    Route::get('/attendance/summary', [AttendanceApiController::class, 'getAttendanceSummary']);
+    Route::get('/attendance/user/{user_id}', [AttendanceApiController::class, 'getUserAttendance']);
 });
 
-Route::post('/attendance/check-in', [AttendanceApiController::class, 'checkIn']);
-Route::post('/attendance/check-out', [AttendanceApiController::class, 'checkOut']);
-
-// Programs
-Route::get('/programs', [AttendanceApiController::class, 'getPrograms']);
-Route::get('/programs/with-schedules', [AttendanceApiController::class, 'getProgramsWithSchedules']);
-Route::get('/user/programs', [AttendanceApiController::class, 'getUserPrograms']);
-Route::get('/user/primary-program', [AttendanceApiController::class, 'getPrimaryProgram']);
-
-// Schedules
-Route::get('/schedule/current', [AttendanceApiController::class, 'getCurrentSchedule']);
-
-// Hosts and Locations
-Route::get('/hosts', [AttendanceApiController::class, 'getHosts']);
-Route::get('/hosts/nearest', [AttendanceApiController::class, 'getNearestHost']);
-Route::post('/hosts/validate-qr', [AttendanceApiController::class, 'validateQRCode']);
-
-// Attendance data
-Route::get('/attendance/summary', [AttendanceApiController::class, 'getAttendanceSummary']);
-Route::get('/attendance/user/{user_id}', [AttendanceApiController::class, 'getUserAttendance']);
+Route::get('/clients', [ClientController::class, 'index']);

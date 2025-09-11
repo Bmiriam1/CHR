@@ -93,9 +93,12 @@
                     class="flex size-11 items-center justify-center rounded-lg outline-hidden transition-colors duration-200 hover:bg-primary/20 focus:bg-primary/20 active:bg-primary/25 dark:hover:bg-navy-300/20 dark:focus:bg-navy-300/20 dark:active:bg-navy-300/25"
                     x-tooltip.placement.right="'Leave Management'">
                     <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M7 11h2v2H7zm0 4h2v2H7zm4-4h2v2h-2zm0 4h2v2h-2zm4-4h2v2h-2zm0 4h2v2h-2z" fill="currentColor" fill-opacity="0.3"/>
-                        <path d="M5 3v4h14V3c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2z" fill="currentColor"/>
-                        <path d="M19 5H5v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5zM7 11h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zM7 15h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2z" fill="currentColor"/>
+                        <path d="M7 11h2v2H7zm0 4h2v2H7zm4-4h2v2h-2zm0 4h2v2h-2zm4-4h2v2h-2zm0 4h2v2h-2z"
+                            fill="currentColor" fill-opacity="0.3" />
+                        <path d="M5 3v4h14V3c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2z" fill="currentColor" />
+                        <path
+                            d="M19 5H5v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5zM7 11h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zM7 15h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2z"
+                            fill="currentColor" />
                     </svg>
                 </a>
 

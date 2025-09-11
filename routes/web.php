@@ -8,9 +8,11 @@ use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\PaymentScheduleController;
 use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\DeviceController;
-use App\Http\Controllers\ClientController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\HostController;
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\SimCardController;
+use App\Http\Controllers\LeaveRequestController;
 use Illuminate\Support\Facades\Route;
 
 // Role-based Login (for direct access)
@@ -57,18 +59,37 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Client Management
-    Route::resource('clients', ClientController::class);
-    Route::get('clients/{client}/programs', [ClientController::class, 'programs'])->name('clients.programs');
+    // Company/Client Management
+    Route::resource('companies', CompanyController::class);
+    Route::get('companies/{company}/programs', [CompanyController::class, 'programs'])->name('companies.programs');
+    Route::patch('companies/{company}/toggle-status', [CompanyController::class, 'toggleStatus'])->name('companies.toggleStatus');
 
     // Program Management
     Route::resource('programs', ProgramController::class);
     Route::post('programs/{program}/duplicate', [ProgramController::class, 'duplicate'])->name('programs.duplicate');
     Route::patch('programs/{program}/activate', [ProgramController::class, 'activate'])->name('programs.activate');
     Route::patch('programs/{program}/deactivate', [ProgramController::class, 'deactivate'])->name('programs.deactivate');
+    
+    // Program additional functionality
+    Route::get('programs/{program}/schedules', [ProgramController::class, 'schedules'])->name('programs.schedules');
+    Route::get('programs/{program}/progress', [ProgramController::class, 'progress'])->name('programs.progress');
+    Route::get('programs/{program}/revenue-report', [ProgramController::class, 'revenueReport'])->name('programs.revenue-report');
+    Route::get('programs/{program}/client-pack', [ProgramController::class, 'clientPack'])->name('programs.client-pack');
+    Route::post('programs/{program}/add-participant', [ProgramController::class, 'addParticipant'])->name('programs.add-participant');
+    Route::patch('programs/{program}/participants/{user}/status', [ProgramController::class, 'updateParticipantStatus'])->name('programs.update-participant-status');
+    Route::get('programs/{program}/participants/{user}', [ProgramController::class, 'showParticipant'])->name('programs.show-participant');
+    Route::post('programs/{program}/documents', [ProgramController::class, 'uploadDocument'])->name('programs.upload-document');
+
+    // SIM Card Management
+    Route::resource('sim-cards', SimCardController::class);
+    Route::post('sim-cards/allocate', [SimCardController::class, 'allocate'])->name('sim-cards.allocate');
+    Route::patch('sim-card-allocations/{allocation}/return', [SimCardController::class, 'returnAllocation'])->name('sim-card-allocations.return');
+    Route::get('programs/{program}/sim-allocations', [SimCardController::class, 'getAllocationsForProgram'])->name('programs.sim-allocations');
+    Route::get('api/sim-cards/available', [SimCardController::class, 'getAvailableSimCards'])->name('api.sim-cards.available');
 
     // Schedule Management
     Route::resource('schedules', ScheduleController::class);
+    Route::get('schedules-calendar', [ScheduleController::class, 'calendar'])->name('schedules.calendar');
     Route::patch('schedules/{schedule}/start', [ScheduleController::class, 'start'])->name('schedules.start');
     Route::patch('schedules/{schedule}/complete', [ScheduleController::class, 'complete'])->name('schedules.complete');
     Route::patch('schedules/{schedule}/cancel', [ScheduleController::class, 'cancel'])->name('schedules.cancel');
@@ -93,11 +114,34 @@ Route::middleware('auth')->group(function () {
 
     // Payslip Management
     Route::resource('payslips', PayslipController::class);
+    Route::get('payslips/generate/form', [PayslipController::class, 'generateForm'])->name('payslips.generate');
     Route::post('payslips/generate', [PayslipController::class, 'generate'])->name('payslips.generate');
     Route::patch('payslips/{payslip}/approve', [PayslipController::class, 'approve'])->name('payslips.approve');
-    Route::patch('payslips/{payslip}/process', [PayslipController::class, 'process'])->name('payslips.process');
+    Route::patch('payslips/{payslip}/mark-paid', [PayslipController::class, 'markAsPaid'])->name('payslips.mark-paid');
     Route::get('payslips/{payslip}/download', [PayslipController::class, 'download'])->name('payslips.download');
     Route::post('payslips/bulk-generate', [PayslipController::class, 'bulkGenerate'])->name('payslips.bulk-generate');
+
+    // Leave Management System
+    Route::prefix('leave')->name('leave-requests.')->group(function () {
+        // Employee leave management
+        Route::get('/', [LeaveRequestController::class, 'index'])->name('index');
+        Route::get('/balances', [LeaveRequestController::class, 'balances'])->name('balances');
+        Route::get('/create', [LeaveRequestController::class, 'create'])->name('create');
+        Route::post('/', [LeaveRequestController::class, 'store'])->name('store');
+        Route::get('/{leaveRequest}', [LeaveRequestController::class, 'show'])->name('show');
+        Route::patch('/{leaveRequest}/cancel', [LeaveRequestController::class, 'cancel'])->name('cancel');
+        
+        // Management functions (HR/Admin)
+        Route::get('/manage/dashboard', [LeaveRequestController::class, 'manage'])->name('manage');
+        Route::patch('/{leaveRequest}/approve', [LeaveRequestController::class, 'approve'])->name('approve');
+        Route::patch('/{leaveRequest}/reject', [LeaveRequestController::class, 'reject'])->name('reject');
+        
+        // SARS reporting
+        Route::get('/reports/sars', [LeaveRequestController::class, 'sarsReport'])->name('sars-report');
+        
+        // Admin functions
+        Route::post('/admin/initialize-balances', [LeaveRequestController::class, 'initializeBalances'])->name('initialize-balances');
+    });
 
     // Payment Schedule Management
     Route::resource('payment-schedules', PaymentScheduleController::class, ['as' => 'payment_schedules']);

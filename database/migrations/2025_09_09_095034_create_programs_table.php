@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('programs', function (Blueprint $table) {
             // Primary Key
             $table->id();
-            
+
             /**
              * ─────────────────────────────────────────────────────────────────────────────
              * BASIC PROGRAM INFORMATION
@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('program_code')->nullable()->unique();
             $table->text('description')->nullable();
             $table->string('image')->nullable();
-            
+
             /**
              * ─────────────────────────────────────────────────────────────────────────────
              * TENANT & COMPANY RELATIONSHIPS
@@ -38,7 +38,7 @@ return new class extends Migration
             $table->foreignId('program_type_id')
                 ->constrained('program_types')
                 ->cascadeOnDelete();
-            
+
             /**
              * ─────────────────────────────────────────────────────────────────────────────
              * PROGRAM DATES & DURATION
@@ -46,31 +46,22 @@ return new class extends Migration
              */
             $table->date('start_date');
             $table->date('end_date');
-            $table->date('enrollment_start_date')->nullable();
-            $table->date('enrollment_end_date')->nullable();
-            $table->unsignedSmallInteger('duration_months')->nullable();
-            $table->unsignedSmallInteger('duration_weeks')->nullable();
-            $table->unsignedSmallInteger('total_training_days')->nullable();
-            
+
             /**
              * ─────────────────────────────────────────────────────────────────────────────
              * FINANCIAL & DAILY RATES (CRITICAL FOR PAYROLL)
              * ─────────────────────────────────────────────────────────────────────────────
              */
             $table->decimal('daily_rate', 8, 2);
-            $table->decimal('monthly_stipend', 8, 2)->nullable();
-            
+
             // Additional allowances
             $table->decimal('transport_allowance', 8, 2)->default(0);
-            $table->decimal('meal_allowance', 8, 2)->default(0);
-            $table->decimal('accommodation_allowance', 8, 2)->default(0);
-            $table->decimal('other_allowance', 8, 2)->default(0);
-            $table->string('other_allowance_description')->nullable();
-            
+
+
             // Payment settings
             $table->enum('payment_frequency', ['daily', 'weekly', 'monthly'])->default('monthly');
             $table->unsignedTinyInteger('payment_day_of_month')->default(25);
-            
+
             /**
              * ─────────────────────────────────────────────────────────────────────────────
              * SARS & COMPLIANCE SETTINGS
@@ -82,16 +73,16 @@ return new class extends Migration
             $table->date('section_12h_start_date')->nullable();
             $table->date('section_12h_end_date')->nullable();
             $table->decimal('section_12h_allowance', 8, 2)->default(0);
-            
+
             // ETI (Employment Tax Incentive) settings
             $table->boolean('eti_eligible_program')->default(false);
             $table->enum('eti_category', ['youth', 'disabled', 'other'])->nullable();
-            
+
             // NQF and SAQA details
             $table->unsignedTinyInteger('nqf_level')->nullable();
             $table->string('saqa_id', 20)->nullable();
             $table->string('qualification_title')->nullable();
-            
+
             /**
              * ─────────────────────────────────────────────────────────────────────────────
              * PROGRAM LOGISTICS
@@ -100,12 +91,12 @@ return new class extends Migration
             $table->enum('location_type', ['onsite', 'online', 'hybrid'])->default('onsite');
             $table->string('venue')->nullable();
             $table->text('venue_address')->nullable();
-            
+
             // Capacity and limits
             $table->unsignedSmallInteger('max_learners')->default(25);
             $table->unsignedSmallInteger('min_learners')->default(5);
             $table->unsignedSmallInteger('enrolled_count')->default(0);
-            
+
             /**
              * ─────────────────────────────────────────────────────────────────────────────
              * BBBEE & CLIENT REQUIREMENTS
@@ -114,7 +105,7 @@ return new class extends Migration
             $table->enum('bbbee_category', ['Cat A', 'Cat B, C, D', 'Cat E'])->nullable();
             $table->enum('is_client_hosting', ['Yes', 'No', 'Maybe'])->nullable();
             $table->text('specific_requirements')->nullable();
-            
+
             /**
              * ─────────────────────────────────────────────────────────────────────────────
              * PERFORMANCE METRICS
@@ -129,7 +120,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('placement_rate')
                 ->nullable()
                 ->comment('Placement % 0–100');
-            
+
             /**
              * ─────────────────────────────────────────────────────────────────────────────
              * STAFF & MANAGEMENT
@@ -143,7 +134,7 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('users')
                 ->onDelete('set null');
-            
+
             /**
              * ─────────────────────────────────────────────────────────────────────────────
              * STATUS & APPROVAL
@@ -155,7 +146,7 @@ return new class extends Migration
             $table->timestamp('approved_at')->nullable();
             $table->foreignId('approved_by')->nullable()
                 ->constrained('users')->onDelete('set null');
-            
+
             /**
              * ─────────────────────────────────────────────────────────────────────────────
              * SYSTEM FIELDS
@@ -165,7 +156,7 @@ return new class extends Migration
             $table->json('additional_settings')->nullable();
             $table->timestamps();
             $table->softDeletes();
-            
+
             /**
              * ─────────────────────────────────────────────────────────────────────────────
              * INDEXES FOR PERFORMANCE

@@ -11,7 +11,26 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Program extends Model
 {
-    use HasFactory, HasTenant, SoftDeletes;
+    use HasFactory, SoftDeletes;
+
+    protected static function booted()
+    {
+        static::addGlobalScope('tenant', function ($builder) {
+            if (auth()->check() && auth()->user()->company_id) {
+                try {
+                    $userCompany = auth()->user()->company;
+                    if ($userCompany && method_exists($userCompany, 'getCompanyGroup')) {
+                        $allowedCompanyIds = $userCompany->getCompanyGroup()->pluck('id');
+                        $builder->whereIn('programs.company_id', $allowedCompanyIds);
+                    } else {
+                        $builder->where('programs.company_id', auth()->user()->company_id);
+                    }
+                } catch (\Exception $e) {
+                    $builder->where('programs.company_id', auth()->user()->company_id);
+                }
+            }
+        });
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -25,9 +44,9 @@ class Program extends Model
 
         // Relationships
         'company_id',
-        'client_id',
         'branch_id',
         'program_type_id',
+        'host_id',
 
         // Dates
         'start_date',
@@ -126,12 +145,13 @@ class Program extends Model
         return $this->belongsTo(Company::class);
     }
 
+
     /**
-     * Get the client this program belongs to.
+     * Get the host for this program.
      */
-    public function client(): BelongsTo
+    public function host(): BelongsTo
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Host::class);
     }
 
     /**
@@ -188,6 +208,38 @@ class Program extends Model
     public function schedules(): HasMany
     {
         return $this->hasMany(Schedule::class);
+    }
+
+    /**
+     * Get all SIM card allocations for this program.
+     */
+    public function simCardAllocations(): HasMany
+    {
+        return $this->hasMany(SimCardAllocation::class);
+    }
+
+    /**
+     * Get active SIM card allocations for this program.
+     */
+    public function activeSimCardAllocations(): HasMany
+    {
+        return $this->hasMany(SimCardAllocation::class)->active();
+    }
+
+    /**
+     * Get the participants for this program.
+     */
+    public function participants(): HasMany
+    {
+        return $this->hasMany(ProgramParticipant::class);
+    }
+
+    /**
+     * Get the leave requests for this program.
+     */
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class);
     }
 
     /**

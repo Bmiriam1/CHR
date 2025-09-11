@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Company;
 use App\Models\Program;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -15,23 +16,30 @@ class CompanyController extends Controller
     public function index()
     {
         $user = auth()->user();
-        
+
         // Get the user's primary company and all child companies
         $primaryCompany = $user->company;
-        
+
         if (!$primaryCompany) {
             return redirect()->route('dashboard')->with('error', 'No company associated with your account.');
         }
-        
+
         // Get the root parent company
         $rootCompany = $primaryCompany->getRootParent();
-        
-        // Get all companies in the group (parent + children)
-        $companies = $rootCompany->getCompanyGroup()
-            ->load(['programs', 'users' => function($query) {
-                $query->where('is_learner', true);
-            }]);
-        
+
+        // Get all companies in the group (parent + children) with proper counts
+        $companies = $rootCompany->getCompanyGroup();
+
+        // Load relationships for each company with all fields
+        $companies->load([
+            'programs',
+            'users' => function ($query) {
+                $query->whereHas('roles', function ($q) {
+                    $q->where('name', 'learner');
+                });
+            }
+        ]);
+
         return view('companies.index', compact('companies', 'rootCompany'));
     }
 
@@ -42,7 +50,7 @@ class CompanyController extends Controller
     {
         $user = auth()->user();
         $parentCompany = $user->company->getRootParent();
-        
+
         return view('companies.create', compact('parentCompany'));
     }
 
@@ -73,7 +81,7 @@ class CompanyController extends Controller
         }
 
         $parentCompany = auth()->user()->company->getRootParent();
-        
+
         $company = Company::create([
             'parent_company_id' => $parentCompany->id,
             'name' => $request->name,
@@ -109,33 +117,47 @@ class CompanyController extends Controller
         // Ensure user can access this company
         $userCompany = auth()->user()->company;
         $allowedCompanies = $userCompany->getCompanyGroup()->pluck('id');
-        
+
         if (!$allowedCompanies->contains($company->id)) {
             abort(403, 'Access denied to this client.');
         }
-        
+
         $company->load([
             'parentCompany',
             'childCompanies',
-            'programs' => function($query) {
-                $query->with(['schedules', 'coordinator'])
-                      ->withCount(['schedules as total_sessions'])
-                      ->orderBy('created_at', 'desc');
-            },
-            'users' => function($query) {
-                $query->where('is_learner', true);
-            }
         ]);
-        
-        // Get statistics
+
+        // Load programs without global scope to avoid tenant filtering
+        // Only show programs that the user has access to (same company or parent company)
+        $userCompany = auth()->user()->company;
+        $allowedCompanyIds = $userCompany->getCompanyGroup()->pluck('id');
+
+        $programs = Program::withoutGlobalScopes()
+            ->whereIn('company_id', $allowedCompanyIds)
+            ->with(['schedules', 'coordinator'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $company->setRelation('programs', $programs);
+
+        // Load users with learner role
+        $learners = User::where('company_id', $company->id)
+            ->whereHas('roles', function ($q) {
+                $q->where('name', 'learner');
+            })
+            ->get();
+
+        $company->setRelation('users', $learners);
+
+        // Get statistics with proper counts
         $stats = [
-            'total_programs' => $company->programs->count(),
-            'active_programs' => $company->programs->where('status', 'active')->count(),
-            'total_learners' => $company->users->count(),
-            'remaining_program_capacity' => $company->getRemainingProgramCapacity(),
-            'remaining_learner_capacity' => $company->getRemainingLearnerCapacity(),
+            'total_programs' => $programs->count(),
+            'active_programs' => $programs->where('status', 'active')->count(),
+            'total_learners' => $learners->count(),
+            'remaining_program_capacity' => max(0, ($company->max_programs ?? 999) - $programs->count()),
+            'remaining_learner_capacity' => max(0, ($company->max_learners ?? 999) - $learners->count()),
         ];
-        
+
         return view('companies.show', compact('company', 'stats'));
     }
 
@@ -147,13 +169,13 @@ class CompanyController extends Controller
         // Ensure user can access this company
         $userCompany = auth()->user()->company;
         $allowedCompanies = $userCompany->getCompanyGroup()->pluck('id');
-        
+
         if (!$allowedCompanies->contains($company->id)) {
             abort(403, 'Access denied to this client.');
         }
-        
+
         $parentCompany = $company->parentCompany;
-        
+
         return view('companies.edit', compact('company', 'parentCompany'));
     }
 
@@ -165,11 +187,11 @@ class CompanyController extends Controller
         // Ensure user can access this company
         $userCompany = auth()->user()->company;
         $allowedCompanies = $userCompany->getCompanyGroup()->pluck('id');
-        
+
         if (!$allowedCompanies->contains($company->id)) {
             abort(403, 'Access denied to this client.');
         }
-        
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'display_name' => 'nullable|string|max:255',
@@ -218,23 +240,23 @@ class CompanyController extends Controller
         // Ensure user can access this company
         $userCompany = auth()->user()->company;
         $allowedCompanies = $userCompany->getCompanyGroup()->pluck('id');
-        
+
         if (!$allowedCompanies->contains($company->id)) {
             abort(403, 'Access denied to this client.');
         }
-        
+
         // Prevent deletion of parent company
         if ($company->isParentCompany()) {
             return redirect()->back()->with('error', 'Cannot delete the primary client.');
         }
-        
+
         // Check if company has active programs
         if ($company->programs()->where('status', '!=', 'completed')->exists()) {
             return redirect()->back()->with('error', 'Cannot delete client with active programs.');
         }
-        
+
         $company->delete();
-        
+
         return redirect()->route('companies.index')
             ->with('success', 'Client deleted successfully.');
     }
@@ -247,18 +269,39 @@ class CompanyController extends Controller
         // Ensure user can access this company
         $userCompany = auth()->user()->company;
         $allowedCompanies = $userCompany->getCompanyGroup()->pluck('id');
-        
+
         if (!$allowedCompanies->contains($company->id)) {
             abort(403, 'Access denied to this client.');
         }
-        
+
         $company->update([
             'is_active' => !$company->is_active
         ]);
-        
+
         $status = $company->is_active ? 'activated' : 'deactivated';
-        
+
         return redirect()->back()
             ->with('success', "Client {$status} successfully.");
+    }
+
+    /**
+     * Show programs for a specific company.
+     */
+    public function programs(Company $company)
+    {
+        // Ensure user can access this company
+        $userCompany = auth()->user()->company;
+        $allowedCompanies = $userCompany->getCompanyGroup()->pluck('id');
+
+        if (!$allowedCompanies->contains($company->id)) {
+            abort(403, 'Access denied to this client.');
+        }
+
+        $programs = $company->programs()
+            ->with(['programType', 'schedules', 'coordinator'])
+            ->orderBy('title')
+            ->paginate(20);
+
+        return view('companies.programs', compact('company', 'programs'));
     }
 }

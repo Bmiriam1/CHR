@@ -155,6 +155,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the SIM card allocations for this user.
+     */
+    public function simCardAllocations()
+    {
+        return $this->hasMany(\App\Models\SimCardAllocation::class);
+    }
+
+    /**
+     * Get the active SIM card allocations for this user.
+     */
+    public function activeSimCardAllocations()
+    {
+        return $this->hasMany(\App\Models\SimCardAllocation::class)->active();
+    }
+
+    /**
      * Send the password reset notification.
      */
     public function sendPasswordResetNotification($token)

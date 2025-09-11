@@ -22,35 +22,35 @@ class ScheduleController extends Controller
     {
         $query = Schedule::with(['program', 'instructor', 'creator'])
             ->where('company_id', Auth::user()->company_id);
-            
+
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('session_code', 'like', "%{$search}%")
-                  ->orWhere('module_name', 'like', "%{$search}%")
-                  ->orWhereHas('program', function($programQuery) use ($search) {
-                      $programQuery->where('title', 'like', "%{$search}%");
-                  });
+                    ->orWhere('session_code', 'like', "%{$search}%")
+                    ->orWhere('module_name', 'like', "%{$search}%")
+                    ->orWhereHas('program', function ($programQuery) use ($search) {
+                        $programQuery->where('title', 'like', "%{$search}%");
+                    });
             });
         }
-        
+
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
-        
+
         if ($request->has('program_id')) {
             $query->where('program_id', $request->program_id);
         }
-        
+
         if ($request->has('date_from')) {
             $query->whereDate('session_date', '>=', $request->date_from);
         }
-        
+
         if ($request->has('date_to')) {
             $query->whereDate('session_date', '<=', $request->date_to);
         }
-        
+
         if ($request->has('online')) {
             $query->where('is_online', $request->online === 'true');
         }
@@ -62,15 +62,77 @@ class ScheduleController extends Controller
             ->orderBy('title')
             ->get();
 
+        // Calculate comprehensive statistics
+        $companyId = Auth::user()->company_id;
+
         $stats = [
-            'total' => Schedule::where('company_id', Auth::user()->company_id)->count(),
-            'today' => Schedule::where('company_id', Auth::user()->company_id)->today()->count(),
-            'scheduled' => Schedule::where('company_id', Auth::user()->company_id)->byStatus('scheduled')->count(),
-            'in_progress' => Schedule::where('company_id', Auth::user()->company_id)->byStatus('in_progress')->count(),
-            'completed' => Schedule::where('company_id', Auth::user()->company_id)->byStatus('completed')->count(),
+            'total' => Schedule::where('company_id', $companyId)->count(),
+            'today' => Schedule::where('company_id', $companyId)->today()->count(),
+            'this_week' => Schedule::where('company_id', $companyId)
+                ->whereBetween('session_date', [now()->startOfWeek(), now()->endOfWeek()])
+                ->count(),
+            'this_month' => Schedule::where('company_id', $companyId)
+                ->whereBetween('session_date', [now()->startOfMonth(), now()->endOfMonth()])
+                ->count(),
+            'scheduled' => Schedule::where('company_id', $companyId)->byStatus('scheduled')->count(),
+            'in_progress' => Schedule::where('company_id', $companyId)->byStatus('in_progress')->count(),
+            'completed' => Schedule::where('company_id', $companyId)->byStatus('completed')->count(),
+            'cancelled' => Schedule::where('company_id', $companyId)->byStatus('cancelled')->count(),
+            'online_sessions' => Schedule::where('company_id', $companyId)->where('is_online', true)->count(),
+            'in_person_sessions' => Schedule::where('company_id', $companyId)->where('is_online', false)->count(),
+            'total_attendees' => Schedule::where('company_id', $companyId)->sum('actual_attendees'),
+            'avg_attendance_rate' => Schedule::where('company_id', $companyId)
+                ->whereNotNull('attendance_rate')
+                ->avg('attendance_rate') ?? 0,
+            'upcoming_today' => Schedule::where('company_id', $companyId)
+                ->where('session_date', today())
+                ->where('status', 'scheduled')
+                ->count(),
+            'overdue' => Schedule::where('company_id', $companyId)
+                ->where('session_date', '<', today())
+                ->where('status', 'scheduled')
+                ->count(),
         ];
 
         return view('schedules.index', compact('schedules', 'programs', 'stats'));
+    }
+
+    /**
+     * Show calendar view of schedules.
+     */
+    public function calendar(Request $request): View
+    {
+        $user = Auth::user();
+        $year = $request->get('year', now()->year);
+        $month = $request->get('month', now()->month);
+        
+        // Get schedules for the specified month
+        $startDate = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
+        
+        $schedules = Schedule::with(['program', 'instructor'])
+            ->where('company_id', $user->company_id)
+            ->whereBetween('session_date', [$startDate, $endDate])
+            ->get()
+            ->groupBy(function ($schedule) {
+                return $schedule->session_date->format('Y-m-d');
+            });
+        
+        // Get monthly stats
+        $monthlyStats = [
+            'total_sessions' => $schedules->flatten()->count(),
+            'completed_sessions' => $schedules->flatten()->where('status', 'completed')->count(),
+            'scheduled_sessions' => $schedules->flatten()->where('status', 'scheduled')->count(),
+            'total_attendees' => $schedules->flatten()->sum('actual_attendees'),
+            'avg_attendance_rate' => $schedules->flatten()->where('attendance_rate', '>', 0)->avg('attendance_rate') ?? 0,
+        ];
+        
+        $programs = Program::where('company_id', $user->company_id)
+            ->select('id', 'title')
+            ->orderBy('title')
+            ->get();
+        
+        return view('schedules.calendar', compact('schedules', 'programs', 'monthlyStats', 'year', 'month'));
     }
 
     /**
@@ -82,9 +144,9 @@ class ScheduleController extends Controller
             ->active()
             ->orderBy('title')
             ->get();
-            
+
         $instructors = User::where('company_id', Auth::user()->company_id)
-            ->whereHas('roles', function($q) {
+            ->whereHas('roles', function ($q) {
                 $q->whereIn('name', ['instructor', 'hr_manager', 'company_admin', 'admin']);
             })
             ->select('id', 'first_name', 'last_name', 'email')
@@ -157,7 +219,7 @@ class ScheduleController extends Controller
     public function show(Schedule $schedule): View
     {
         $this->authorize('view', $schedule);
-        
+
         $schedule->load(['program', 'instructor', 'creator', 'attendanceRecords.user']);
 
         return view('schedules.show', compact('schedule'));
@@ -169,14 +231,14 @@ class ScheduleController extends Controller
     public function edit(Schedule $schedule): View
     {
         $this->authorize('update', $schedule);
-        
+
         $programs = Program::where('company_id', Auth::user()->company_id)
             ->active()
             ->orderBy('title')
             ->get();
-            
+
         $instructors = User::where('company_id', Auth::user()->company_id)
-            ->whereHas('roles', function($q) {
+            ->whereHas('roles', function ($q) {
                 $q->whereIn('name', ['instructor', 'hr_manager', 'company_admin', 'admin']);
             })
             ->select('id', 'first_name', 'last_name', 'email')
@@ -241,7 +303,7 @@ class ScheduleController extends Controller
     public function destroy(Schedule $schedule): RedirectResponse
     {
         $this->authorize('delete', $schedule);
-        
+
         if ($schedule->attendanceRecords()->count() > 0) {
             return redirect()->route('schedules.index')
                 ->with('error', 'Cannot delete schedule with existing attendance records.');
@@ -264,7 +326,7 @@ class ScheduleController extends Controller
     public function start(Schedule $schedule): RedirectResponse
     {
         $this->authorize('manage', $schedule);
-        
+
         if ($schedule->status !== 'scheduled') {
             return redirect()->back()
                 ->with('error', 'Only scheduled sessions can be started.');
@@ -282,7 +344,7 @@ class ScheduleController extends Controller
     public function complete(Schedule $schedule): RedirectResponse
     {
         $this->authorize('manage', $schedule);
-        
+
         if ($schedule->status !== 'in_progress') {
             return redirect()->back()
                 ->with('error', 'Only sessions in progress can be completed.');
@@ -300,7 +362,7 @@ class ScheduleController extends Controller
     public function cancel(Request $request, Schedule $schedule): RedirectResponse
     {
         $this->authorize('manage', $schedule);
-        
+
         $validated = $request->validate([
             'reason' => 'required|string|max:500',
         ]);
@@ -322,7 +384,7 @@ class ScheduleController extends Controller
     public function qrCode(Schedule $schedule): View
     {
         $this->authorize('view', $schedule);
-        
+
         if (!$schedule->qr_code_active) {
             abort(404, 'QR code is not active for this session.');
         }

@@ -1,415 +1,250 @@
 @extends('layouts.app')
 
-@section('title', 'Payslips')
-
 @section('content')
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0 text-gray-800">Payslip Management</h1>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#generatePayslipModal">
-                        <i class="fas fa-plus"></i> Generate Payslips
-                    </button>
-                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#bulkGenerateModal">
-                        <i class="fas fa-layer-group"></i> Bulk Generate
-                    </button>
+    <div class="container px-4 sm:px-5">
+        <div class="py-4 lg:py-6">
+            <!-- Page Header -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-medium text-slate-800 dark:text-navy-50 lg:text-2xl">
+                        Payslips Management
+                    </h2>
+                    <p class="mt-0.5 text-slate-500 dark:text-navy-200">
+                        Manage employee payslips and payroll processing
+                    </p>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Stats Row -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">This Month</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $monthlyStats['count'] ?? 0 }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-file-invoice fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Paid</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">R {{ number_format($monthlyStats['total_paid'] ?? 0, 2) }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Approval</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $pendingApproval ?? 0 }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clock fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">PAYE Tax</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">R {{ number_format($monthlyStats['total_paye'] ?? 0, 2) }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="GET" class="row g-3">
-                <div class="col-md-3">
-                    <label for="search" class="form-label">Search</label>
-                    <input type="text" class="form-control" id="search" name="search" 
-                           value="{{ request('search') }}" placeholder="Payslip number or employee...">
-                </div>
-                <div class="col-md-2">
-                    <label for="status" class="form-label">Status</label>
-                    <select class="form-select" id="status" name="status">
-                        <option value="">All Statuses</option>
-                        <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Draft</option>
-                        <option value="calculated" {{ request('status') === 'calculated' ? 'selected' : '' }}>Calculated</option>
-                        <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
-                        <option value="processed" {{ request('status') === 'processed' ? 'selected' : '' }}>Processed</option>
-                        <option value="paid" {{ request('status') === 'paid' ? 'selected' : '' }}>Paid</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label for="month" class="form-label">Month</label>
-                    <select class="form-select" id="month" name="month">
-                        <option value="">All Months</option>
-                        @for($i = 1; $i <= 12; $i++)
-                            <option value="{{ $i }}" {{ request('month') == $i ? 'selected' : '' }}>
-                                {{ \Carbon\Carbon::create(null, $i)->format('F') }}
-                            </option>
-                        @endfor
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label for="year" class="form-label">Year</label>
-                    <select class="form-select" id="year" name="year">
-                        <option value="">All Years</option>
-                        @for($y = now()->year; $y >= now()->year - 5; $y--)
-                            <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>{{ $y }}</option>
-                        @endfor
-                    </select>
-                </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-outline-primary me-2">
-                        <i class="fas fa-search"></i> Filter
-                    </button>
-                    <a href="{{ route('payslips.index') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-times"></i> Clear
+                <div class="text-right">
+                    <a href="{{ route('payslips.generate') }}"
+                        class="btn bg-success font-medium text-white hover:bg-success-focus focus:bg-success-focus active:bg-success-focus/90">
+                        <i class="fa fa-plus mr-2"></i>
+                        Generate Payslips
                     </a>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Payslips Table -->
-    <div class="card shadow">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Payslip #</th>
-                            <th>Employee</th>
-                            <th>Program</th>
-                            <th>Period</th>
-                            <th>Gross Pay</th>
-                            <th>PAYE Tax</th>
-                            <th>Net Pay</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($payslips ?? [] as $payslip)
-                            <tr>
-                                <td>
-                                    <strong>{{ $payslip->payslip_number }}</strong>
-                                    <div class="small text-muted">{{ $payslip->created_at->format('M d, Y') }}</div>
-                                </td>
-                                <td>
-                                    <div>
-                                        {{ $payslip->user->name }}
-                                        <div class="small text-muted">{{ $payslip->user->employee_number }}</div>
-                                    </div>
-                                </td>
-                                <td>{{ $payslip->program->program_name }}</td>
-                                <td>
-                                    {{ $payslip->payroll_period_start->format('M d') }} - 
-                                    {{ $payslip->payroll_period_end->format('M d, Y') }}
-                                </td>
-                                <td>R {{ number_format($payslip->gross_earnings, 2) }}</td>
-                                <td>R {{ number_format($payslip->paye_tax, 2) }}</td>
-                                <td>
-                                    <strong>R {{ number_format($payslip->net_pay, 2) }}</strong>
-                                </td>
-                                <td>
-                                    <span class="badge bg-{{ $payslip->getStatusColor() }}">
-                                        {{ ucfirst($payslip->status) }}
-                                    </span>
-                                    @if($payslip->is_final)
-                                        <div><small class="badge bg-success">Final</small></div>
-                                    @endif
-                                </td>
-                                <td>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                                type="button" data-bs-toggle="dropdown">
-                                            Actions
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li>
-                                                <a class="dropdown-item" href="{{ route('payslips.show', $payslip) }}">
-                                                    <i class="fas fa-eye"></i> View Details
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="dropdown-item" href="{{ route('payslips.download', $payslip) }}" target="_blank">
-                                                    <i class="fas fa-download"></i> Download PDF
-                                                </a>
-                                            </li>
-                                            @if($payslip->status === 'calculated' && !$payslip->is_final)
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li>
-                                                    <form method="POST" action="{{ route('payslips.approve', $payslip) }}" class="d-inline">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <button type="submit" class="dropdown-item text-success">
-                                                            <i class="fas fa-check"></i> Approve
-                                                        </button>
-                                                    </form>
-                                                </li>
-                                            @endif
-                                            @if($payslip->status === 'approved' && !$payslip->is_final)
-                                                <li>
-                                                    <form method="POST" action="{{ route('payslips.process', $payslip) }}" class="d-inline">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <button type="submit" class="dropdown-item text-primary">
-                                                            <i class="fas fa-cogs"></i> Process Payment
-                                                        </button>
-                                                    </form>
-                                                </li>
-                                            @endif
-                                            @if(!$payslip->is_final)
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li>
-                                                    <a class="dropdown-item" href="{{ route('payslips.edit', $payslip) }}">
-                                                        <i class="fas fa-edit"></i> Edit
-                                                    </a>
-                                                </li>
-                                            @endif
-                                        </ul>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="9" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <i class="fas fa-file-invoice fa-3x mb-3"></i>
-                                        <p>No payslips found</p>
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generatePayslipModal">
-                                            Generate Your First Payslip
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
             </div>
 
-            <!-- Pagination -->
-            @if(isset($payslips) && $payslips->hasPages())
-                <div class="d-flex justify-content-center mt-4">
-                    {{ $payslips->links() }}
-                </div>
-            @endif
-        </div>
-    </div>
-</div>
-
-<!-- Generate Payslip Modal -->
-<div class="modal fade" id="generatePayslipModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form method="POST" action="{{ route('payslips.generate') }}">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Generate Payslips</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="generate_company_id" class="form-label required">Company</label>
-                            <select class="form-select" id="generate_company_id" name="company_id" required>
-                                <option value="">Select Company</option>
-                                <!-- Companies would be populated here -->
-                            </select>
+            <!-- Stats Cards -->
+            <div class="mt-6 grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-4">
+                <!-- Total Payslips -->
+                <div class="card">
+                    <div class="flex items-center justify-between p-4">
+                        <div>
+                            <p class="text-xs+ text-slate-400 dark:text-navy-300">Total Payslips</p>
+                            <h3 class="text-xl font-semibold text-slate-700 dark:text-navy-100">
+                                {{ number_format($stats['total_payslips']) }}
+                            </h3>
+                            <p class="text-xs text-info">All Time</p>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="generate_program_id" class="form-label">Program (Optional)</label>
-                            <select class="form-select" id="generate_program_id" name="program_id">
-                                <option value="">All Programs</option>
-                                <!-- Programs would be populated based on company selection -->
-                            </select>
+                        <div class="mask is-squircle flex size-10 items-center justify-center bg-info/10">
+                            <i class="fa fa-file-invoice text-info"></i>
                         </div>
                     </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="payroll_period_start" class="form-label required">Period Start</label>
-                            <input type="date" class="form-control" id="payroll_period_start" 
-                                   name="payroll_period_start" required>
+                </div>
+
+                <!-- Draft Payslips -->
+                <div class="card">
+                    <div class="flex items-center justify-between p-4">
+                        <div>
+                            <p class="text-xs+ text-slate-400 dark:text-navy-300">Draft Payslips</p>
+                            <h3 class="text-xl font-semibold text-slate-700 dark:text-navy-100">
+                                {{ number_format($stats['draft_payslips']) }}
+                            </h3>
+                            <p class="text-xs text-warning">Pending</p>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="payroll_period_end" class="form-label required">Period End</label>
-                            <input type="date" class="form-control" id="payroll_period_end" 
-                                   name="payroll_period_end" required>
+                        <div class="mask is-squircle flex size-10 items-center justify-center bg-warning/10">
+                            <i class="fa fa-clock text-warning"></i>
                         </div>
                     </div>
+                </div>
 
-                    <div class="mb-3">
-                        <label for="pay_date" class="form-label required">Pay Date</label>
-                        <input type="date" class="form-control" id="pay_date" name="pay_date" required>
+                <!-- Generated Payslips -->
+                <div class="card">
+                    <div class="flex items-center justify-between p-4">
+                        <div>
+                            <p class="text-xs+ text-slate-400 dark:text-navy-300">Generated Payslips</p>
+                            <h3 class="text-xl font-semibold text-slate-700 dark:text-navy-100">
+                                {{ number_format($stats['generated_payslips']) }}
+                            </h3>
+                            <p class="text-xs text-success">Ready</p>
+                        </div>
+                        <div class="mask is-squircle flex size-10 items-center justify-center bg-success/10">
+                            <i class="fa fa-check-circle text-success"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paid Payslips -->
+                <div class="card">
+                    <div class="flex items-center justify-between p-4">
+                        <div>
+                            <p class="text-xs+ text-slate-400 dark:text-navy-300">Paid Payslips</p>
+                            <h3 class="text-xl font-semibold text-slate-700 dark:text-navy-100">
+                                {{ number_format($stats['paid_payslips']) }}
+                            </h3>
+                            <p class="text-xs text-secondary">Completed</p>
+                        </div>
+                        <div class="mask is-squircle flex size-10 items-center justify-center bg-secondary/10">
+                            <i class="fa fa-coins text-secondary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payslips Table -->
+            <div class="mt-6">
+                <div class="card">
+                    <div class="flex items-center justify-between px-4 py-4 sm:px-5">
+                        <h2 class="text-lg font-medium tracking-wide text-slate-700 dark:text-navy-100">
+                            Recent Payslips
+                        </h2>
                     </div>
 
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>Note:</strong> This will generate payslips for all eligible learners with attendance records in the specified period.
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-cogs"></i> Generate Payslips
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+                    @if($payslips->count() > 0)
+                        <div class="overflow-x-auto">
+                            <table class="is-hoverable w-full text-left">
+                                <thead>
+                                    <tr class="border-y border-transparent border-b-slate-200 dark:border-b-navy-500">
+                                        <th
+                                            class="whitespace-nowrap px-4 py-3 font-semibold uppercase text-slate-800 dark:text-navy-100 lg:px-5">
+                                            Employee
+                                        </th>
+                                        <th
+                                            class="whitespace-nowrap px-4 py-3 font-semibold uppercase text-slate-800 dark:text-navy-100 lg:px-5">
+                                            Pay Period
+                                        </th>
+                                        <th
+                                            class="whitespace-nowrap px-4 py-3 font-semibold uppercase text-slate-800 dark:text-navy-100 lg:px-5">
+                                            Days Worked
+                                        </th>
+                                        <th
+                                            class="whitespace-nowrap px-4 py-3 font-semibold uppercase text-slate-800 dark:text-navy-100 lg:px-5">
+                                            Gross Pay
+                                        </th>
+                                        <th
+                                            class="whitespace-nowrap px-4 py-3 font-semibold uppercase text-slate-800 dark:text-navy-100 lg:px-5">
+                                            Net Pay
+                                        </th>
+                                        <th
+                                            class="whitespace-nowrap px-4 py-3 font-semibold uppercase text-slate-800 dark:text-navy-100 lg:px-5">
+                                            Status
+                                        </th>
+                                        <th
+                                            class="whitespace-nowrap px-4 py-3 font-semibold uppercase text-slate-800 dark:text-navy-100 lg:px-5">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($payslips as $payslip)
+                                        <tr class="border-y border-transparent border-b-slate-200 dark:border-b-navy-500">
+                                            <td class="whitespace-nowrap px-4 py-3 sm:px-5">
+                                                <div class="flex items-center space-x-3">
+                                                    <div class="avatar h-9 w-9">
+                                                        <div class="is-initial rounded-full bg-info text-white">
+                                                            {{ substr($payslip->user->first_name, 0, 1) }}{{ substr($payslip->user->last_name, 0, 1) }}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <p class="font-medium text-slate-700 dark:text-navy-100">
+                                                            {{ $payslip->user->first_name }} {{ $payslip->user->last_name }}
+                                                        </p>
+                                                        <p class="text-xs text-slate-400 dark:text-navy-300">
+                                                            {{ $payslip->user->employee_code }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-navy-100 sm:px-5">
+                                                {{ $payslip->pay_period_formatted }}
+                                            </td>
+                                            <td class="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-navy-100 sm:px-5">
+                                                {{ $payslip->days_present }}/{{ $payslip->days_worked }}
+                                            </td>
+                                            <td class="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-navy-100 sm:px-5">
+                                                R{{ number_format($payslip->gross_pay, 2) }}
+                                            </td>
+                                            <td class="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-navy-100 sm:px-5">
+                                                R{{ number_format($payslip->net_pay, 2) }}
+                                            </td>
+                                            <td class="whitespace-nowrap px-4 py-3 sm:px-5">
+                                                <div class="badge space-x-2.5 px-3 py-1
+                                                                @if($payslip->status === 'draft') bg-slate-150 text-slate-800 dark:bg-navy-500 dark:text-navy-100
+                                                                @elseif($payslip->status === 'generated') bg-info/10 text-info dark:bg-info-focus dark:text-info
+                                                                @elseif($payslip->status === 'approved') bg-success/10 text-success dark:bg-success-focus dark:text-success-light
+                                                                @elseif($payslip->status === 'paid') bg-secondary/10 text-secondary dark:bg-secondary-focus dark:text-secondary-light
+                                                                @endif">
+                                                    <div class="h-2 w-2 rounded-full 
+                                                                    @if($payslip->status === 'draft') bg-slate-500
+                                                                    @elseif($payslip->status === 'generated') bg-info
+                                                                    @elseif($payslip->status === 'approved') bg-success
+                                                                    @elseif($payslip->status === 'paid') bg-secondary
+                                                                    @endif"></div>
+                                                    <span>{{ ucfirst($payslip->status) }}</span>
+                                                </div>
+                                            </td>
+                                            <td class="whitespace-nowrap px-4 py-3 sm:px-5">
+                                                <div class="flex space-x-2">
+                                                    <a href="{{ route('payslips.show', $payslip) }}"
+                                                        class="btn h-8 w-8 rounded-full p-0 hover:bg-slate-300/20 focus:bg-slate-300/20 active:bg-slate-300/25 dark:hover:bg-navy-300/20 dark:focus:bg-navy-300/20 dark:active:bg-navy-300/25">
+                                                        <i class="fa fa-eye"></i>
+                                                    </a>
+                                                    <a href="{{ route('payslips.download', $payslip) }}"
+                                                        class="btn h-8 w-8 rounded-full p-0 hover:bg-slate-300/20 focus:bg-slate-300/20 active:bg-slate-300/25 dark:hover:bg-navy-300/20 dark:focus:bg-navy-300/20 dark:active:bg-navy-300/25">
+                                                        <i class="fa fa-download"></i>
+                                                    </a>
+                                                    @if($payslip->status === 'generated')
+                                                        <form action="{{ route('payslips.approve', $payslip) }}" method="POST"
+                                                            class="inline">
+                                                            @csrf
+                                                            <button type="submit"
+                                                                class="btn h-8 w-8 rounded-full p-0 hover:bg-slate-300/20 focus:bg-slate-300/20 active:bg-slate-300/25 dark:hover:bg-navy-300/20 dark:focus:bg-navy-300/20 dark:active:bg-navy-300/25">
+                                                                <i class="fa fa-check text-success"></i>
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                    @if($payslip->status === 'approved')
+                                                        <form action="{{ route('payslips.mark-paid', $payslip) }}" method="POST"
+                                                            class="inline">
+                                                            @csrf
+                                                            <button type="submit"
+                                                                class="btn h-8 w-8 rounded-full p-0 hover:bg-slate-300/20 focus:bg-slate-300/20 active:bg-slate-300/25 dark:hover:bg-navy-300/20 dark:focus:bg-navy-300/20 dark:active:bg-navy-300/25">
+                                                                <i class="fa fa-coins text-secondary"></i>
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
 
-<!-- Bulk Generate Modal -->
-<div class="modal fade" id="bulkGenerateModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form method="POST" action="{{ route('payslips.bulk-generate') }}">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Bulk Generate Payslips</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="bulk_companies" class="form-label">Select Companies</label>
-                        <div class="form-check-group" style="max-height: 200px; overflow-y: auto;">
-                            <!-- Companies checkboxes would be populated here -->
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="1" id="company_1">
-                                <label class="form-check-label" for="company_1">Company Name 1</label>
+                        <!-- Pagination -->
+                        <div class="px-4 py-4 sm:px-5">
+                            {{ $payslips->links() }}
+                        </div>
+                    @else
+                        <div class="px-4 py-12 text-center sm:px-5">
+                            <div class="text-slate-400 dark:text-navy-300 mb-3">
+                                <i class="fa fa-file-invoice text-5xl"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-slate-700 dark:text-navy-100">
+                                No payslips found
+                            </h3>
+                            <p class="text-slate-500 dark:text-navy-300 mt-1">
+                                Get started by generating payslips for your employees.
+                            </p>
+                            <div class="mt-6">
+                                <a href="{{ route('payslips.generate') }}"
+                                    class="btn bg-primary font-medium text-white hover:bg-primary-focus focus:bg-primary-focus active:bg-primary-focus/90">
+                                    <i class="fa fa-plus mr-2"></i>
+                                    Generate Payslips
+                                </a>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="bulk_period_start" class="form-label required">Period Start</label>
-                            <input type="date" class="form-control" id="bulk_period_start" 
-                                   name="payroll_period_start" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="bulk_period_end" class="form-label required">Period End</label>
-                            <input type="date" class="form-control" id="bulk_period_end" 
-                                   name="payroll_period_end" required>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Warning:</strong> This will generate payslips for ALL selected companies. Please ensure attendance data is complete.
-                    </div>
+                    @endif
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">
-                        <i class="fas fa-layer-group"></i> Bulk Generate
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
-</div>
-
-<style>
-.required::after {
-    content: " *";
-    color: red;
-}
-</style>
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-set pay date to end of period + 5 days
-    const periodEndInput = document.getElementById('payroll_period_end');
-    const payDateInput = document.getElementById('pay_date');
-    
-    if (periodEndInput && payDateInput) {
-        periodEndInput.addEventListener('change', function() {
-            if (this.value) {
-                const endDate = new Date(this.value);
-                endDate.setDate(endDate.getDate() + 5);
-                
-                const year = endDate.getFullYear();
-                const month = String(endDate.getMonth() + 1).padStart(2, '0');
-                const day = String(endDate.getDate()).padStart(2, '0');
-                
-                payDateInput.value = `${year}-${month}-${day}`;
-            }
-        });
-    }
-});
-</script>
-@endpush
 @endsection

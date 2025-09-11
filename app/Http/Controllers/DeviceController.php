@@ -13,9 +13,13 @@ class DeviceController extends Controller
     use AuthorizesRequests;
     public function index(Request $request)
     {
+        // Get user's company and allowed company IDs for tenant filtering
+        $userCompany = Auth::user()->company;
+        $allowedCompanyIds = $userCompany->getCompanyGroup()->pluck('id');
+
         $query = Device::with(['user', 'approver', 'blocker'])
-            ->whereHas('user', function($q) {
-                $q->where('company_id', Auth::user()->company_id);
+            ->whereHas('user', function($q) use ($allowedCompanyIds) {
+                $q->whereIn('company_id', $allowedCompanyIds);
             });
 
         if ($request->has('status')) {
@@ -48,12 +52,11 @@ class DeviceController extends Controller
 
         $devices = $query->latest('last_seen_at')->paginate(15);
 
-        $companyId = Auth::user()->company_id;
         $stats = [
-            'total' => Device::whereHas('user', fn($q) => $q->where('company_id', $companyId))->count(),
-            'active' => Device::whereHas('user', fn($q) => $q->where('company_id', $companyId))->active()->count(),
-            'blocked' => Device::whereHas('user', fn($q) => $q->where('company_id', $companyId))->blocked()->count(),
-            'needs_approval' => Device::whereHas('user', fn($q) => $q->where('company_id', $companyId))->needingApproval()->count(),
+            'total' => Device::whereHas('user', fn($q) => $q->whereIn('company_id', $allowedCompanyIds))->count(),
+            'active' => Device::whereHas('user', fn($q) => $q->whereIn('company_id', $allowedCompanyIds))->active()->count(),
+            'blocked' => Device::whereHas('user', fn($q) => $q->whereIn('company_id', $allowedCompanyIds))->blocked()->count(),
+            'needs_approval' => Device::whereHas('user', fn($q) => $q->whereIn('company_id', $allowedCompanyIds))->needingApproval()->count(),
         ];
 
         return view('devices.index', compact('devices', 'stats'));

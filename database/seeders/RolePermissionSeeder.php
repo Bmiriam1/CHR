@@ -70,6 +70,12 @@ class RolePermissionSeeder extends Seeder
             'unblock devices',
             'register devices',
 
+            // Host Management
+            'view hosts',
+            'create hosts',
+            'edit hosts',
+            'delete hosts',
+
             // Compliance & Reporting
             'view compliance dashboard',
             'generate sars reports',

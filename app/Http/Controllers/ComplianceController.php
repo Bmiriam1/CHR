@@ -751,6 +751,9 @@ class ComplianceController extends Controller
             $employeeCounter++;
         }
 
+        // Trailer record (6010) - Required by SARS e@syfile
+        $csv .= $this->generateTrailerRecord($employeeData->count(), $company, $taxYear);
+
         return $csv;
     }
 
@@ -761,8 +764,8 @@ class ComplianceController extends Controller
     {
         $record = '';
 
-        // 2010 - Record type (Company header)
-        $record .= '2010,"' . $this->escapeCsvField($company->name) . '",';
+        // 2010 - Record type (Company header) - Just the record identifier
+        $record .= '2010,';
 
         // 2015 - Status (LIVE)
         $record .= '2015,"LIVE",';
@@ -844,14 +847,17 @@ class ComplianceController extends Controller
         $user = $employee['employee'];
         $record = '';
 
-        // 3010 - Record type (Employee IRP5)
-        $record .= '3010,"' . $company->paye_reference_number . $taxYear . '09' . str_pad($employeeCounter, 6, '0', STR_PAD_LEFT) . '",';
+        // 3010 - Record type (Employee IRP5) - Just the record identifier
+        $record .= '3010,';
 
         // 3015 - Certificate type
         $record .= '3015,"IRP5",';
 
         // 3020 - Certificate status
         $record .= '3020,"A",'; // A for Active
+        
+        // 3021 - Certificate reference number
+        $record .= '3021,"' . $company->paye_reference_number . $taxYear . '09' . str_pad($employeeCounter, 6, '0', STR_PAD_LEFT) . '",';
 
         // 3025 - Tax year
         $record .= '3025,' . $taxYear . ',';
@@ -964,6 +970,40 @@ class ComplianceController extends Controller
         // 9999 - End of record marker
         $record .= '9999' . "\n";
 
+        return $record;
+    }
+
+    /**
+     * Generate trailer record (6010) for SARS e@syfile.
+     */
+    private function generateTrailerRecord($totalEmployees, $company, $taxYear): string
+    {
+        $record = '';
+        
+        // 6010 - Record type (Trailer) - Just the record identifier
+        $record .= '6010,';
+        
+        // 6015 - Status (LIVE)
+        $record .= '6015,"LIVE",';
+        
+        // 6020 - PAYE Reference
+        $record .= '6020,"' . $company->paye_reference_number . '",';
+        
+        // 6025 - Tax year
+        $record .= '6025,' . $taxYear . ',';
+        
+        // 6030 - Total number of employees
+        $record .= '6030,' . $totalEmployees . ',';
+        
+        // 6035 - File generation date (YYYYMMDD)
+        $record .= '6035,' . now()->format('Ymd') . ',';
+        
+        // 6040 - File generation time (HHMMSS)
+        $record .= '6040,' . now()->format('His') . ',';
+        
+        // 9999 - End of record marker
+        $record .= '9999' . "\n";
+        
         return $record;
     }
 

@@ -29,9 +29,9 @@
                     </svg>
                 </a>
 
-                @can('viewAny', \App\Models\Client::class)
-                    <!-- Clients -->
-                    <a href="{{ route('clients.index') }}"
+                @can('viewAny', \App\Models\Company::class)
+                    <!-- Companies -->
+                    <a href="{{ route('companies.index') }}"
                         class="flex size-11 items-center justify-center rounded-lg outline-hidden transition-colors duration-200 hover:bg-primary/20 focus:bg-primary/20 active:bg-primary/25 dark:hover:bg-navy-300/20 dark:focus:bg-navy-300/20 dark:active:bg-navy-300/25"
                         x-tooltip.placement.right="'Companies'">
                         <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -60,16 +60,15 @@
                     </a>
                 @endcan
 
-                @can('view attendance')
-                    <!-- Attendance -->
-                    <a href="{{ route('attendance.index') }}"
+                @can('view hosts')
+                    <!-- Hosts -->
+                    <a href="{{ route('hosts.index') }}"
                         class="flex size-11 items-center justify-center rounded-lg outline-hidden transition-colors duration-200 hover:bg-primary/20 focus:bg-primary/20 active:bg-primary/25 dark:hover:bg-navy-300/20 dark:focus:bg-navy-300/20 dark:active:bg-navy-300/25"
-                        x-tooltip.placement.right="'Attendance'">
+                        x-tooltip.placement.right="'Host Locations'">
                         <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                fill="currentColor" fill-opacity="0.3" />
-                            <path d="M20 21v-2a4 4 0 00-3-3.87M15 3.13A4 4 0 016.87 6M9 21v-2a4 4 0 013.5-3.97"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3" />
+                            <path d="M12 2L2 7l10 5 10-5-10-5z" fill="currentColor" />
                         </svg>
                     </a>
                 @endcan
@@ -88,6 +87,17 @@
                         </svg>
                     </a>
                 @endcan
+
+                <!-- Leave Management -->
+                <a href="{{ route('leave-requests.index') }}"
+                    class="flex size-11 items-center justify-center rounded-lg outline-hidden transition-colors duration-200 hover:bg-primary/20 focus:bg-primary/20 active:bg-primary/25 dark:hover:bg-navy-300/20 dark:focus:bg-navy-300/20 dark:active:bg-navy-300/25"
+                    x-tooltip.placement.right="'Leave Management'">
+                    <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7 11h2v2H7zm0 4h2v2H7zm4-4h2v2h-2zm0 4h2v2h-2zm4-4h2v2h-2zm0 4h2v2h-2z" fill="currentColor" fill-opacity="0.3"/>
+                        <path d="M5 3v4h14V3c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2z" fill="currentColor"/>
+                        <path d="M19 5H5v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5zM7 11h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zM7 15h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2z" fill="currentColor"/>
+                    </svg>
+                </a>
 
                 @can('view compliance dashboard')
                     <!-- Compliance & Reports -->

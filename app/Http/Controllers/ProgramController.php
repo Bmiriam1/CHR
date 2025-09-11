@@ -86,15 +86,10 @@ class ProgramController extends Controller
             ->select('id', 'first_name', 'last_name', 'email')
             ->get();
 
-        // Get clients for the dropdown
-        $clients = \App\Models\Client::where('company_id', Auth::user()->company_id)
-            ->active()
-            ->orderBy('name')
-            ->get();
+        // Get program types
+        $programTypes = \App\Models\ProgramType::orderBy('name')->get();
 
-        $selectedClientId = $request->get('client_id');
-
-        return view('programs.create', compact('coordinators', 'clients', 'selectedClientId'));
+        return view('programs.create', compact('coordinators', 'programTypes'));
     }
 
     /**
@@ -104,24 +99,14 @@ class ProgramController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'program_code' => 'required|string|max:50|unique:programs',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'program_code' => 'nullable|string|max:50|unique:programs',
             'description' => 'nullable|string',
-            'client_id' => 'required|exists:clients,id',
-            'coordinator_id' => 'nullable|exists:users,id',
-            'nqf_level' => 'required|integer|between:1,10',
-            'saqa_id' => 'nullable|string|max:20',
-            'qualification_title' => 'nullable|string|max:255',
-            'duration_months' => 'required|integer|min:1',
-            'duration_weeks' => 'nullable|integer|min:1',
-            'total_training_days' => 'nullable|integer|min:1',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
             'daily_rate' => 'required|numeric|min:0',
-            'monthly_stipend' => 'nullable|numeric|min:0',
             'transport_allowance' => 'nullable|numeric|min:0',
-            'meal_allowance' => 'nullable|numeric|min:0',
-            'accommodation_allowance' => 'nullable|numeric|min:0',
-            'other_allowance' => 'nullable|numeric|min:0',
-            'other_allowance_description' => 'nullable|string|max:255',
-            'payment_frequency' => 'required|in:daily,weekly,monthly',
+            'payment_frequency' => 'nullable|in:daily,weekly,monthly',
             'payment_day_of_month' => 'nullable|integer|between:1,31',
             'section_12h_eligible' => 'boolean',
             'section_12h_contract_number' => 'nullable|string|max:50',
@@ -129,24 +114,36 @@ class ProgramController extends Controller
             'section_12h_end_date' => 'nullable|date|after:section_12h_start_date',
             'section_12h_allowance' => 'nullable|numeric|min:0',
             'eti_eligible_program' => 'boolean',
-            'eti_category' => 'nullable|string|max:50',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
-            'enrollment_start_date' => 'nullable|date',
-            'enrollment_end_date' => 'nullable|date|after:enrollment_start_date',
-            'max_learners' => 'required|integer|min:1',
-            'min_learners' => 'nullable|integer|min:1',
-            'location_type' => 'required|in:onsite,offsite,online,hybrid',
+            'eti_category' => 'nullable|in:youth,disabled,other',
+            'nqf_level' => 'nullable|integer|between:1,10',
+            'saqa_id' => 'nullable|string|max:20',
+            'qualification_title' => 'nullable|string|max:255',
+            'location_type' => 'nullable|in:onsite,online,hybrid',
             'venue' => 'nullable|string|max:255',
             'venue_address' => 'nullable|string',
-            'bbbee_category' => 'nullable|string|max:50',
+            'max_learners' => 'nullable|integer|min:1',
+            'min_learners' => 'nullable|integer|min:1',
+            'bbbee_category' => 'nullable|in:Cat A,Cat B\\, C\\, D,Cat E',
+            'is_client_hosting' => 'nullable|in:Yes,No,Maybe',
             'specific_requirements' => 'nullable|string',
+            'learner_retention_rate' => 'nullable|integer|min:0|max:100',
+            'completion_rate' => 'nullable|integer|min:0|max:100',
+            'placement_rate' => 'nullable|integer|min:0|max:100',
+            'coordinator_id' => 'nullable|exists:users,id',
+            'program_type_id' => 'required|exists:program_types,id',
+            'sort_order' => 'nullable|integer|min:0',
         ]);
 
-        $validated['company_id'] = Auth::user()->company_id;
+        // Handle file upload
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $filename = time() . '_' . $image->getClientOriginalName();
+            $path = $image->storeAs('programs/images', $filename, 'public');
+            $validated['image'] = $path;
+        }
+
         $validated['creator_id'] = Auth::id();
-        $validated['status'] = 'draft';
-        $validated['enrolled_count'] = 0;
+        $validated['company_id'] = Auth::user()->company_id;
 
         $program = Program::create($validated);
 
@@ -159,24 +156,43 @@ class ProgramController extends Controller
      */
     public function show(Program $program): View
     {
-        $this->authorize('view', $program);
+        // Set the current company in session for tenant scope
+        session(['current_company_id' => $program->company_id]);
 
-        $program->load(['company', 'coordinator', 'creator', 'approvedBy']);
+        // Restrict access to users from the same company group
+        $user = Auth::user();
+        $userCompany = $user->company;
+        $allowedCompanyIds = $userCompany->getCompanyGroup()->pluck('id');
 
-        // Get related schedules (need to add this relationship to Program model)
-        $schedules = \App\Models\Schedule::where('program_id', $program->id)
-            ->with('attendanceRecords')
-            ->get();
+        if (!$allowedCompanyIds->contains($program->company_id)) {
+            abort(403, 'Unauthorized: You do not have access to this program.');
+        }
 
+        // Load relationships
+        $program->load(['company', 'coordinator', 'creator', 'approvedBy', 'programType', 'participants.user', 'leaveRequests.user']);
+
+        // Get related schedules if they exist
+        $schedules = collect(); // Empty collection for now
+        try {
+            if (class_exists('\App\Models\Schedule')) {
+                $schedules = \App\Models\Schedule::where('program_id', $program->id)
+                    ->get();
+            }
+        } catch (\Exception $e) {
+            // Schedule model might not exist yet, that's ok
+        }
+
+        // Build stats array with safe fallbacks
         $stats = [
             'total_schedules' => $schedules->count(),
             'active_schedules' => $schedules->where('status', 'scheduled')->count(),
             'completed_schedules' => $schedules->where('status', 'completed')->count(),
-            'total_learners' => $program->enrolled_count,
-            'remaining_spots' => $program->getRemainingSpots(),
-            'total_value' => $program->getTotalValue(),
-            'daily_payment' => $program->getTotalDailyPayment(),
+            'total_learners' => $program->enrolled_count ?? 0,
+            'remaining_spots' => method_exists($program, 'getRemainingSpots') ? $program->getRemainingSpots() : 0,
+            'total_value' => method_exists($program, 'getTotalValue') ? $program->getTotalValue() : 0,
+            'daily_payment' => method_exists($program, 'getTotalDailyPayment') ? $program->getTotalDailyPayment() : 0,
             'average_attendance' => $schedules->avg('attendance_rate') ?? 0,
+            'completion_rate' => $program->completion_rate ?? 0,
         ];
 
         return view('programs.show', compact('program', 'stats', 'schedules'));
@@ -344,5 +360,304 @@ class ProgramController extends Controller
 
         return redirect()->back()
             ->with('success', 'Program approved successfully.');
+    }
+
+    /**
+     * Show program schedules management page.
+     */
+    public function schedules(Program $program): View
+    {
+        $this->authorize('view', $program);
+
+        // Get schedules with relationships
+        $schedules = collect();
+        try {
+            if (class_exists('\App\Models\Schedule')) {
+                $schedules = \App\Models\Schedule::where('program_id', $program->id)
+                    ->with(['instructor', 'attendanceRecords'])
+                    ->orderBy('date', 'desc')
+                    ->get();
+            }
+        } catch (\Exception $e) {
+            // Schedule model might not exist yet
+        }
+
+        $stats = [
+            'total_schedules' => $schedules->count(),
+            'completed_schedules' => $schedules->where('status', 'completed')->count(),
+            'upcoming_schedules' => $schedules->where('status', 'scheduled')->count(),
+            'average_attendance' => $schedules->avg('attendance_rate') ?? 0,
+        ];
+
+        return view('programs.schedules', compact('program', 'schedules', 'stats'));
+    }
+
+    /**
+     * Show program progress tracking page.
+     */
+    public function progress(Program $program): View
+    {
+        $this->authorize('view', $program);
+
+        $program->load(['participants.user', 'schedules']);
+
+        // Calculate progress statistics
+        $totalParticipants = $program->participants->count();
+        $activeParticipants = $program->participants->where('status', 'active')->count();
+        $completedParticipants = $program->participants->where('status', 'completed')->count();
+        $droppedParticipants = $program->participants->where('status', 'dropped')->count();
+
+        $stats = [
+            'total_participants' => $totalParticipants,
+            'active_participants' => $activeParticipants,
+            'completed_participants' => $completedParticipants,
+            'dropped_participants' => $droppedParticipants,
+            'completion_rate' => $totalParticipants > 0 ? round(($completedParticipants / $totalParticipants) * 100, 1) : 0,
+            'retention_rate' => $totalParticipants > 0 ? round((($activeParticipants + $completedParticipants) / $totalParticipants) * 100, 1) : 0,
+        ];
+
+        return view('programs.progress', compact('program', 'stats'));
+    }
+
+    /**
+     * Generate revenue report for the program.
+     */
+    public function revenueReport(Program $program): View
+    {
+        $this->authorize('view', $program);
+
+        // Calculate revenue data
+        $totalValue = $program->getTotalValue() ?? 0;
+        $dailyRate = $program->daily_rate ?? 0;
+        $transportAllowance = $program->transport_allowance ?? 0;
+        $participantCount = $program->participants->where('status', 'active')->count();
+
+        // Get payslips data if available
+        $payslipsData = [];
+        try {
+            if (class_exists('\App\Models\Payslip')) {
+                $payslips = \App\Models\Payslip::where('program_id', $program->id)
+                    ->with('user')
+                    ->get();
+                
+                $payslipsData = [
+                    'total_paid' => $payslips->sum('net_amount'),
+                    'total_payslips' => $payslips->count(),
+                    'pending_payslips' => $payslips->where('status', 'pending')->count(),
+                    'approved_payslips' => $payslips->where('status', 'approved')->count(),
+                ];
+            }
+        } catch (\Exception $e) {
+            // Payslip model might not exist
+        }
+
+        $revenueStats = [
+            'program_value' => $totalValue,
+            'daily_rate' => $dailyRate,
+            'transport_allowance' => $transportAllowance,
+            'active_participants' => $participantCount,
+            'monthly_cost' => ($dailyRate + $transportAllowance) * $participantCount * 22, // Assuming 22 working days
+            'payslips_data' => $payslipsData,
+        ];
+
+        return view('programs.revenue-report', compact('program', 'revenueStats'));
+    }
+
+    /**
+     * Generate client pack for the program.
+     */
+    public function clientPack(Program $program): View
+    {
+        $this->authorize('view', $program);
+
+        $program->load(['company', 'coordinator', 'programType', 'participants.user']);
+
+        // Prepare client pack data
+        $clientPackData = [
+            'program_overview' => $program,
+            'participant_list' => $program->participants->where('status', 'active'),
+            'schedule_summary' => [], // Will be populated if schedules exist
+            'compliance_info' => [
+                'section_12h_eligible' => $program->section_12h_eligible,
+                'eti_eligible' => $program->eti_eligible_program,
+                'section_12h_contract' => $program->section_12h_contract_number,
+            ],
+        ];
+
+        return view('programs.client-pack', compact('program', 'clientPackData'));
+    }
+
+    /**
+     * Add a participant to the program.
+     */
+    public function addParticipant(Request $request, Program $program)
+    {
+        $this->authorize('update', $program);
+
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'enrolled_date' => 'nullable|date',
+            'status' => 'nullable|in:active,inactive,completed,dropped',
+        ]);
+
+        // Check if user is already enrolled
+        $existingParticipant = $program->participants()->where('user_id', $request->user_id)->first();
+        if ($existingParticipant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User is already enrolled in this program.',
+            ], 422);
+        }
+
+        // Check program capacity
+        if ($program->max_learners && $program->participants->count() >= $program->max_learners) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Program has reached maximum capacity.',
+            ], 422);
+        }
+
+        try {
+            // Add participant through the relationship
+            $program->participants()->attach($request->user_id, [
+                'enrolled_date' => $request->enrolled_date ?? now(),
+                'status' => $request->status ?? 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Participant added successfully.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add participant: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Update participant status.
+     */
+    public function updateParticipantStatus(Request $request, Program $program, User $user)
+    {
+        $this->authorize('update', $program);
+
+        $request->validate([
+            'status' => 'required|in:active,inactive,completed,dropped',
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        // Check if user is enrolled in this program
+        $participant = $program->participants()->where('user_id', $user->id)->first();
+        if (!$participant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User is not enrolled in this program.',
+            ], 404);
+        }
+
+        try {
+            // Update participant status
+            $program->participants()->updateExistingPivot($user->id, [
+                'status' => $request->status,
+                'status_reason' => $request->reason,
+                'updated_at' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Participant status updated successfully.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update participant status: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Show participant details.
+     */
+    public function showParticipant(Program $program, User $user): View
+    {
+        $this->authorize('view', $program);
+
+        // Check if user is enrolled in this program
+        $participant = $program->participants()->where('user_id', $user->id)->first();
+        if (!$participant) {
+            abort(404, 'Participant not found in this program.');
+        }
+
+        $user->load(['programs', 'leaveRequests' => function($query) use ($program) {
+            $query->where('program_id', $program->id);
+        }]);
+
+        // Get participant's attendance data if available
+        $attendanceData = [];
+        try {
+            if (class_exists('\App\Models\AttendanceRecord')) {
+                $attendanceRecords = \App\Models\AttendanceRecord::where('user_id', $user->id)
+                    ->whereHas('schedule', function($query) use ($program) {
+                        $query->where('program_id', $program->id);
+                    })
+                    ->with('schedule')
+                    ->get();
+
+                $attendanceData = [
+                    'total_sessions' => $attendanceRecords->count(),
+                    'attended_sessions' => $attendanceRecords->where('status', 'present')->count(),
+                    'missed_sessions' => $attendanceRecords->where('status', 'absent')->count(),
+                    'attendance_rate' => $attendanceRecords->count() > 0 ? 
+                        round(($attendanceRecords->where('status', 'present')->count() / $attendanceRecords->count()) * 100, 1) : 0,
+                ];
+            }
+        } catch (\Exception $e) {
+            // AttendanceRecord model might not exist
+        }
+
+        return view('programs.participant-details', compact('program', 'user', 'participant', 'attendanceData'));
+    }
+
+    /**
+     * Upload a document for the program.
+     */
+    public function uploadDocument(Request $request, Program $program)
+    {
+        $this->authorize('update', $program);
+
+        $request->validate([
+            'document' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
+            'document_type' => 'required|string|max:100',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $file = $request->file('document');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('program-documents/' . $program->id, $filename, 'public');
+
+            // Here you would typically save document info to a database table
+            // For now, we'll just return success
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Document uploaded successfully.',
+                'document' => [
+                    'filename' => $filename,
+                    'path' => $path,
+                    'type' => $request->document_type,
+                    'description' => $request->description,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload document: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

@@ -3,88 +3,102 @@
 @section('content')
     <div class="container px-4 sm:px-5">
         <div class="py-4 lg:py-6">
-            <!-- Page header -->
+            <!-- Page Header -->
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-1">
+                <div>
                     <h2 class="text-xl font-medium text-slate-800 dark:text-navy-50 lg:text-2xl">
                         Device Management
                     </h2>
+                    <p class="mt-0.5 text-slate-500 dark:text-navy-200">
+                        Monitor and manage registered devices
+                    </p>
                 </div>
             </div>
 
             <!-- Stats Cards -->
-            <div class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <div class="rounded-lg bg-white p-4 shadow dark:bg-navy-700">
-                    <div class="flex items-center justify-between">
+            <div class="mt-6 grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-4">
+                <div class="card">
+                    <div class="flex items-center justify-between p-4">
                         <div>
-                            <p class="text-xs+ font-medium uppercase tracking-wide text-slate-400 dark:text-navy-300">
+                            <p class="text-xs+ text-slate-400 dark:text-navy-300">
                                 Total Devices
                             </p>
-                            <p class="text-2xl font-semibold text-slate-700 dark:text-navy-100">
+                            <h3 class="text-xl font-semibold text-slate-700 dark:text-navy-100">
                                 {{ $stats['total'] }}
-                            </p>
+                            </h3>
+                            <p class="text-xs text-info">Registered</p>
                         </div>
-                        <div class="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                            <i class="fa-solid fa-mobile-screen text-lg"></i>
+                        <div class="mask is-squircle flex size-10 items-center justify-center bg-info/10">
+                            <i class="fa-solid fa-mobile-screen text-info"></i>
                         </div>
                     </div>
                 </div>
 
-                <div class="rounded-lg bg-white p-4 shadow dark:bg-navy-700">
-                    <div class="flex items-center justify-between">
+                <div class="card">
+                    <div class="flex items-center justify-between p-4">
                         <div>
-                            <p class="text-xs+ font-medium uppercase tracking-wide text-slate-400 dark:text-navy-300">
+                            <p class="text-xs+ text-slate-400 dark:text-navy-300">
                                 Active
                             </p>
-                            <p class="text-2xl font-semibold text-slate-700 dark:text-navy-100">
+                            <h3 class="text-xl font-semibold text-slate-700 dark:text-navy-100">
                                 {{ $stats['active'] }}
-                            </p>
+                            </h3>
+                            <p class="text-xs text-success">Online</p>
                         </div>
-                        <div class="flex size-12 items-center justify-center rounded-full bg-success/10 text-success">
-                            <i class="fa-solid fa-check-circle text-lg"></i>
+                        <div class="mask is-squircle flex size-10 items-center justify-center bg-success/10">
+                            <i class="fa-solid fa-check-circle text-success"></i>
                         </div>
                     </div>
                 </div>
 
-                <div class="rounded-lg bg-white p-4 shadow dark:bg-navy-700">
-                    <div class="flex items-center justify-between">
+                <div class="card">
+                    <div class="flex items-center justify-between p-4">
                         <div>
-                            <p class="text-xs+ font-medium uppercase tracking-wide text-slate-400 dark:text-navy-300">
+                            <p class="text-xs+ text-slate-400 dark:text-navy-300">
                                 Blocked
                             </p>
-                            <p class="text-2xl font-semibold text-slate-700 dark:text-navy-100">
+                            <h3 class="text-xl font-semibold text-slate-700 dark:text-navy-100">
                                 {{ $stats['blocked'] }}
-                            </p>
+                            </h3>
+                            <p class="text-xs text-error">Restricted</p>
                         </div>
-                        <div class="flex size-12 items-center justify-center rounded-full bg-error/10 text-error">
-                            <i class="fa-solid fa-ban text-lg"></i>
+                        <div class="mask is-squircle flex size-10 items-center justify-center bg-error/10">
+                            <i class="fa-solid fa-ban text-error"></i>
                         </div>
                     </div>
                 </div>
 
-                <div class="rounded-lg bg-white p-4 shadow dark:bg-navy-700">
-                    <div class="flex items-center justify-between">
+                <div class="card">
+                    <div class="flex items-center justify-between p-4">
                         <div>
-                            <p class="text-xs+ font-medium uppercase tracking-wide text-slate-400 dark:text-navy-300">
+                            <p class="text-xs+ text-slate-400 dark:text-navy-300">
                                 Needs Approval
                             </p>
-                            <p class="text-2xl font-semibold text-slate-700 dark:text-navy-100">
+                            <h3 class="text-xl font-semibold text-slate-700 dark:text-navy-100">
                                 {{ $stats['needs_approval'] }}
+                            </h3>
+                            <p class="text-xs {{ $stats['needs_approval'] > 0 ? 'text-warning' : 'text-success' }}">
+                                {{ $stats['needs_approval'] > 0 ? 'Action Required' : 'Up to Date' }}
                             </p>
                         </div>
-                        <div class="flex size-12 items-center justify-center rounded-full bg-warning/10 text-warning">
-                            <i class="fa-solid fa-clock text-lg"></i>
+                        <div
+                            class="mask is-squircle flex size-10 items-center justify-center {{ $stats['needs_approval'] > 0 ? 'bg-warning/10' : 'bg-success/10' }}">
+                            <i
+                                class="fa-solid {{ $stats['needs_approval'] > 0 ? 'fa-clock text-warning' : 'fa-check text-success' }}"></i>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Filters -->
-            <div class="card mt-6">
-                <div class="p-4 sm:p-5">
+            <div class="mt-6 card">
+                <div class="px-4 py-4 sm:px-5">
+                    <h3 class="text-lg font-medium tracking-wide text-slate-700 dark:text-navy-100 mb-4">
+                        Filter Devices
+                    </h3>
                     <form method="GET" class="flex flex-wrap items-end gap-4">
                         <!-- Search -->
-                        <div class="flex-1 min-w-48 max-w-md">
+                        <div class="flex-1 min-w-48">
                             <label class="block text-xs+ font-medium text-slate-700 dark:text-navy-100 mb-1">Search</label>
                             <input name="search" value="{{ request('search') }}"
                                 class="form-input w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 placeholder:text-slate-400/70 hover:border-slate-400 focus:border-primary dark:border-navy-450 dark:hover:border-navy-400 dark:focus:border-accent"
@@ -92,7 +106,7 @@
                         </div>
 
                         <!-- Status Filter -->
-                        <div class="min-w-32 max-w-48">
+                        <div class="min-w-32">
                             <label class="block text-xs+ font-medium text-slate-700 dark:text-navy-100 mb-1">Status</label>
                             <select name="status"
                                 class="form-select w-full rounded-lg border border-slate-300 bg-white px-3 py-2 hover:border-slate-400 focus:border-primary dark:border-navy-450 dark:bg-navy-700 dark:hover:border-navy-400 dark:focus:border-accent">
@@ -108,7 +122,7 @@
                         </div>
 
                         <!-- Platform Filter -->
-                        <div class="min-w-32 max-w-48">
+                        <div class="min-w-32">
                             <label
                                 class="block text-xs+ font-medium text-slate-700 dark:text-navy-100 mb-1">Platform</label>
                             <select name="platform"
@@ -143,7 +157,7 @@
             </div>
 
             <!-- Devices Table -->
-            <div class="card mt-6">
+            <div class="mt-6 card">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
                         <thead>

@@ -1,21 +1,27 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <!-- Page header -->
-    <div class="flex items-center justify-between py-5 lg:py-6">
-        <div class="flex items-center space-x-1">
-            <a href="{{ route('devices.show', $device) }}" 
-               class="btn size-8 rounded-full p-0 hover:bg-slate-300/20 focus:bg-slate-300/20 active:bg-slate-300/25 dark:hover:bg-navy-300/20 dark:focus:bg-navy-300/20 dark:active:bg-navy-300/25">
-                <i class="fa-solid fa-chevron-left text-base"></i>
-            </a>
-            <h2 class="text-xl font-medium text-slate-800 dark:text-navy-50 lg:text-2xl">
-                Edit Device
-            </h2>
-        </div>
-    </div>
+    <div class="container px-4 sm:px-5">
+        <div class="py-4 lg:py-6">
+            <!-- Page Header -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-1">
+                    <a href="{{ route('devices.show', $device) }}" 
+                       class="btn size-8 rounded-full p-0 hover:bg-slate-300/20 focus:bg-slate-300/20 active:bg-slate-300/25 dark:hover:bg-navy-300/20 dark:focus:bg-navy-300/20 dark:active:bg-navy-300/25">
+                        <i class="fa-solid fa-chevron-left text-base"></i>
+                    </a>
+                    <div>
+                        <h2 class="text-xl font-medium text-slate-800 dark:text-navy-50 lg:text-2xl">
+                            Edit Device
+                        </h2>
+                        <p class="mt-0.5 text-slate-500 dark:text-navy-200">
+                            Update device settings and configuration
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <!-- Main Form -->
         <div class="lg:col-span-2">
             <form method="POST" action="{{ route('devices.update', $device) }}">
@@ -283,8 +289,9 @@
                 </div>
             </div>
         </div>
+            </div>
+        </div>
     </div>
-</div>
 
 <script>
     function toggleAutoCheckoutHours(checkbox) {

@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Client extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'name',
         'code',
@@ -29,12 +31,11 @@ class Client extends Model
     ];
 
     protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'status' => 'string',
     ];
 
     /**
-     * Get the company that owns the client.
+     * Get the company that owns this client.
      */
     public function company(): BelongsTo
     {
@@ -42,7 +43,7 @@ class Client extends Model
     }
 
     /**
-     * Get the parent client (for sub-clients).
+     * Get the parent client.
      */
     public function parentClient(): BelongsTo
     {
@@ -50,9 +51,9 @@ class Client extends Model
     }
 
     /**
-     * Get the sub-clients of this client.
+     * Get child clients.
      */
-    public function subClients(): HasMany
+    public function childClients(): HasMany
     {
         return $this->hasMany(Client::class, 'parent_client_id');
     }
@@ -74,7 +75,7 @@ class Client extends Model
     }
 
     /**
-     * Get the programs for this client.
+     * Get programs for this client.
      */
     public function programs(): HasMany
     {
@@ -82,15 +83,7 @@ class Client extends Model
     }
 
     /**
-     * Get all programs including sub-client programs.
-     */
-    public function allPrograms(): HasManyThrough
-    {
-        return $this->hasManyThrough(Program::class, Client::class, 'parent_client_id', 'client_id');
-    }
-
-    /**
-     * Scope for active clients.
+     * Scope to filter active clients.
      */
     public function scopeActive($query)
     {
@@ -98,77 +91,10 @@ class Client extends Model
     }
 
     /**
-     * Scope for parent clients (no parent_client_id).
+     * Scope to filter clients by company.
      */
-    public function scopeParents($query)
+    public function scopeForCompany($query, $companyId)
     {
-        return $query->whereNull('parent_client_id');
-    }
-
-    /**
-     * Scope for sub-clients (has parent_client_id).
-     */
-    public function scopeSubClients($query)
-    {
-        return $query->whereNotNull('parent_client_id');
-    }
-
-    /**
-     * Check if this is a parent client.
-     */
-    public function isParent(): bool
-    {
-        return is_null($this->parent_client_id);
-    }
-
-    /**
-     * Check if this is a sub-client.
-     */
-    public function isSubClient(): bool
-    {
-        return !is_null($this->parent_client_id);
-    }
-
-    /**
-     * Get the full hierarchy path.
-     */
-    public function getHierarchyPath(): string
-    {
-        $path = [$this->name];
-        $parent = $this->parentClient;
-
-        while ($parent) {
-            array_unshift($path, $parent->name);
-            $parent = $parent->parentClient;
-        }
-
-        return implode(' > ', $path);
-    }
-
-    /**
-     * Get all sub-clients recursively.
-     */
-    public function getAllSubClients(): \Illuminate\Database\Eloquent\Collection
-    {
-        $subClients = $this->subClients;
-
-        foreach ($this->subClients as $subClient) {
-            $subClients = $subClients->merge($subClient->getAllSubClients());
-        }
-
-        return $subClients;
-    }
-
-    /**
-     * Get the status color for display.
-     */
-    public function getStatusColor(): string
-    {
-        return match ($this->status) {
-            'active' => 'green',
-            'inactive' => 'gray',
-            'suspended' => 'red',
-            default => 'gray',
-        };
+        return $query->where('company_id', $companyId);
     }
 }

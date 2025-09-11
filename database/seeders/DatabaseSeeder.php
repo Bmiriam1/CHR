@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Run all seeders in the required order
         $this->call([
             RolePermissionSeeder::class,
             ComplianceTestSeeder::class,

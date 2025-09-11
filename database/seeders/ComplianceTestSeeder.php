@@ -48,70 +48,28 @@ class ComplianceTestSeeder extends Seeder
 
     private function createCompanies(): void
     {
-        $companies = [
-            [
-                'name' => 'TechSkills SA (Pty) Ltd',
-                'tenant_key' => 'techskills-sa',
-                'company_registration_number' => '2020/123456/07',
-                'vat_number' => '4123456789',
-                'paye_reference_number' => '7123456789',
-                'uif_reference_number' => 'U123456789',
-                'sdl_reference_number' => 'SDL123456789',
-                'email' => 'admin@techskills.co.za',
-                'phone' => '+27123456789',
-                'physical_address_line1' => '123 Tech Street',
-                'physical_suburb' => 'Sandton',
-                'physical_city' => 'Sandton',
-                'physical_postal_code' => '2196',
-                'postal_address_line1' => 'PO Box 123',
-                'postal_suburb' => 'Sandton',
-                'postal_city' => 'Sandton',
-                'postal_code' => '2146',
-                'industry_sector' => 'Information Technology',
-                'is_active' => true,
-                'is_verified' => true,
-            ],
-            [
-                'name' => 'Green Energy Training Academy',
-                'tenant_key' => 'green-energy-academy',
-                'company_registration_number' => '2019/987654/07',
-                'vat_number' => '4987654321',
-                'paye_reference_number' => '7987654321',
-                'uif_reference_number' => 'U987654321',
-                'sdl_reference_number' => 'SDL987654321',
-                'email' => 'admin@greenenergy.co.za',
-                'phone' => '+27987654321',
-                'physical_address_line1' => '456 Solar Avenue',
-                'physical_suburb' => 'Green Point',
-                'physical_city' => 'Cape Town',
-                'physical_postal_code' => '8001',
-                'postal_address_line1' => 'PO Box 456',
-                'postal_suburb' => 'Cape Town',
-                'postal_city' => 'Cape Town',
-                'postal_code' => '8000',
-                'industry_sector' => 'Renewable Energy',
-                'is_active' => true,
-                'is_verified' => true,
-            ]
-        ];
-
-        foreach ($companies as $companyData) {
-            Company::firstOrCreate(['tenant_key' => $companyData['tenant_key']], $companyData);
-        }
+        // Skip creating companies - Connect HR will be created by TestCompanySeeder
+        // This seeder now only adds compliance test data to existing Connect HR company
     }
 
     private function createUsers(): void
     {
-        $companies = Company::all();
+        // Only work with Connect HR company
+        $company = Company::where('paye_reference_number', '7080824016')->first();
+        if (!$company) {
+            $this->command->error('Connect HR company not found. Run TestCompanySeeder first.');
+            return;
+        }
+        
+        $companies = collect([$company]);
 
-        // Create admin users
+        // Create admin users for Connect HR
         $adminData = [
             ['name' => 'Sarah Johnson', 'id_number' => '8001015009067'],
-            ['name' => 'Michael Green', 'id_number' => '7512183056082'],
         ];
 
         foreach ($companies as $index => $company) {
-            $admin = $adminData[$index];
+            $admin = $adminData[0]; // Only use first admin for Connect HR
             $firstName = explode(' ', $admin['name'])[0];
             $lastName = explode(' ', $admin['name'])[1] ?? 'Admin';
 
@@ -251,7 +209,13 @@ class ComplianceTestSeeder extends Seeder
 
     private function createPrograms(): void
     {
-        $companies = Company::all();
+        // Only work with Connect HR company
+        $company = Company::where('paye_reference_number', '7080824016')->first();
+        if (!$company) {
+            return;
+        }
+        
+        $companies = collect([$company]);
 
         $programsData = [
             [
@@ -536,8 +500,14 @@ class ComplianceTestSeeder extends Seeder
 
     private function createPaymentSchedules(): void
     {
-        $companies = Company::all();
-        $programs = Program::all();
+        // Only work with Connect HR company
+        $company = Company::where('paye_reference_number', '7080824016')->first();
+        if (!$company) {
+            return;
+        }
+        
+        $companies = collect([$company]);
+        $programs = Program::where('company_id', $company->id)->get();
 
         foreach ($companies as $company) {
             $companyPrograms = $programs->where('company_id', $company->id);

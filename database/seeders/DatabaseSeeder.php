@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
             ComplianceTestSeeder::class,
             SALeaveTypesSeeder::class,
             TestCompanySeeder::class,
-            LearnerIRP5Seeder::class,
+            ConnectHRPayslipSeeder::class,
             SimCardAllocationSeeder::class,
             TestRolesSeeder::class,
         ]);

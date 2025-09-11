@@ -25,7 +25,7 @@ class PayslipController extends Controller
 
         $payslips = Payslip::with(['user', 'program'])
             ->where('company_id', $user->company_id)
-            ->orderBy('pay_period_start', 'desc')
+            ->orderBy('payroll_period_start', 'desc')
             ->paginate(15);
 
         $stats = [
@@ -69,8 +69,8 @@ class PayslipController extends Controller
         foreach ($learners as $learner) {
             // Check if payslip already exists for this period
             $existingPayslip = Payslip::where('user_id', $learner->id)
-                ->where('pay_period_start', $startDate)
-                ->where('pay_period_end', $endDate)
+                ->where('payroll_period_start', $startDate)
+                ->where('payroll_period_end', $endDate)
                 ->first();
 
             if ($existingPayslip) {
@@ -111,22 +111,18 @@ class PayslipController extends Controller
                 'user_id' => $learner->id,
                 'company_id' => $user->company_id,
                 'program_id' => $program ? $program->id : null,
-                'pay_period_start' => $startDate,
-                'pay_period_end' => $endDate,
+                'payroll_period_start' => $startDate,
+                'payroll_period_end' => $endDate,
                 'pay_date' => $payDate,
-                'basic_pay' => $basicPay,
-                'daily_rate' => $dailyRate,
+                'basic_earnings' => $basicPay,
+                'daily_rate_used' => $dailyRate,
                 'days_worked' => $totalDays,
-                'days_present' => $presentDays,
-                'days_absent' => $absentDays,
-                'days_authorized_absent' => $authorizedAbsentDays,
-                'days_unauthorized_absent' => $absentDays,
                 'transport_allowance' => $transportAllowance,
                 'meal_allowance' => $mealAllowance,
-                'gross_pay' => $grossPay,
-                'annual_taxable_income' => $annualTaxableIncome,
-                'status' => 'generated',
-                'created_by' => $user->id,
+                'gross_earnings' => $grossPay,
+                'status' => 'calculated',
+                'calculated_by' => $user->id,
+                'calculated_at' => now(),
             ]);
 
             // Calculate UIF and PAYE

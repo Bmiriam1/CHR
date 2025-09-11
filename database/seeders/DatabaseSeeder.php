@@ -18,11 +18,10 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             ComplianceTestSeeder::class,
             SALeaveTypesSeeder::class,
+            TestCompanySeeder::class,
             LearnerIRP5Seeder::class,
             SimCardAllocationSeeder::class,
-            TestCompanySeeder::class,
             TestRolesSeeder::class,
-            LearnerIRP5Seeder::class,
         ]);
     }
 }

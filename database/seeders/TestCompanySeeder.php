@@ -16,28 +16,52 @@ class TestCompanySeeder extends Seeder
      */
     public function run(): void
     {
-        // Get existing company with PAYE reference 7123456789
-        $company = Company::where('paye_reference_number', '7123456789')->first();
-
-        // Create or update admin user
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@connecthr.co.za'],
+        // Create Connect HR company based on IRP5 data
+        $company = Company::firstOrCreate(
+            ['paye_reference_number' => '7080824016'],
             [
-                'first_name' => 'Kyle',
-                'last_name' => 'Mabaso',
+                'name' => 'Connect HR',
+                'display_name' => 'Connect HR',
+                'trading_name' => 'Connect HR',
+                'paye_reference_number' => '7080824016',
+                'uif_reference_number' => 'U080824016',
+                'sdl_reference_number' => 'L080824016',
+                'phone' => '0118495307',
+                'email' => 'natalie@gtadmin.co.za',
+                'physical_address_line1' => 'Greenstone PI',
+                'physical_address_line2' => 'Stoneridge Office Park',
+                'physical_suburb' => 'Greenstone',
+                'physical_city' => 'Greenstone',
+                'physical_postal_code' => '1616',
+                'physical_country_code' => 'ZA',
+                'postal_address_line1' => 'Greenstone PI',
+                'postal_address_line2' => 'Stoneridge Office Park',
+                'postal_suburb' => 'Greenstone',
+                'postal_city' => 'Greenstone',
+                'postal_code' => '1616',
+                'postal_country_code' => 'ZA',
+                'is_active' => true,
+                'is_verified' => true,
+                'max_learners' => 100,
+                'max_programs' => 20,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        // Create admin user (Natalie De Lange - the accountant from the data)
+        $admin = User::firstOrCreate(
+            ['email' => 'mmathabo@skillspanda.co.za'],
+            [
+                'first_name' => 'Mmathabo',
+                'last_name' => 'Mphahlele',
+                'email' => 'mmathabo@skillspanda.co.za',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
                 'company_id' => $company->id,
-                'employee_number' => 'ADM001',
-                'id_number' => '8001011234567',
-                'tax_number' => 'TAX123456789',
-                'phone' => '+27 11 123 4568',
-                'birth_date' => '1980-01-01',
-                'employment_start_date' => '2023-01-01',
-                'res_addr_line1' => '456 Admin Street',
-                'res_suburb' => 'Sandton',
-                'res_city' => 'Johannesburg',
-                'res_postcode' => '2196',
+                'employee_number' => 'NAT001',
+                'occupation' => 'Accountant',
+                'phone' => '0118495307',
                 'is_employee' => true,
                 'employment_status' => 'active',
                 'created_at' => now(),
@@ -45,26 +69,38 @@ class TestCompanySeeder extends Seeder
             ]
         );
 
-        // Create learner user
+        // Learners are created by LearnerIRP5Seeder - just update them with Connect HR company
+        $learnerEmails = [
+            'andile.mdlankomo@connecthr.co.za',
+            'ayanda.thabethe@connecthr.co.za',
+            'bongiwe.nkosi@connecthr.co.za',
+            'kelebogile.pelo@connecthr.co.za',
+            'kwazusomandla.ndaba@connecthr.co.za',
+        ];
+
+        User::whereIn('email', $learnerEmails)->update(['company_id' => $company->id]);
+
+        // Create a simple learner account for testing
         User::firstOrCreate(
             ['email' => 'learner@connecthr.co.za'],
             [
-                'first_name' => 'Michaela',
-                'last_name' => 'McRowdie',
+                'first_name' => 'Anna',
+                'last_name' => 'Mupariwa',
                 'email' => 'learner@connecthr.co.za',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
                 'company_id' => $company->id,
-                'employee_number' => 'CHR001',
+                'employee_number' => 'CHR999',
                 'id_number' => '9501011234567',
                 'tax_number' => 'TAX987654321',
-                'phone' => '+27 11 123 4569',
+                'phone' => '0118495308',
                 'birth_date' => '1995-01-01',
                 'employment_start_date' => '2024-03-01',
-                'res_addr_line1' => '789 Learner Avenue',
-                'res_suburb' => 'Rosebank',
-                'res_city' => 'Johannesburg',
-                'res_postcode' => '2196',
+                'res_addr_line1' => 'Greenstone PI',
+                'res_addr_line2' => 'Stoneridge Office Park',
+                'res_suburb' => 'Greenstone',
+                'res_city' => 'Greenstone',
+                'res_postcode' => '1616',
                 'is_employee' => true,
                 'employment_status' => 'active',
                 'created_at' => now(),
@@ -122,9 +158,10 @@ class TestCompanySeeder extends Seeder
             ]
         );
 
-        $this->command->info('Test company and users created successfully!');
-        $this->command->info('Admin: admin@connecthr.co.za (password: password)');
-        $this->command->info('Learner: learner@connecthr.co.za (password: password)');
-        $this->command->info('Company PAYE Reference: 7123456789');
+        $this->command->info('Connect HR test company created successfully!');
+        $this->command->info('Admin: natalie@gtadmin.co.za (password: password)');
+        $this->command->info('Simple Learner: learner@connecthr.co.za (password: password)');
+        $this->command->info('IRP5 Learners: 5 learners linked to Connect HR company (password: password123)');
+        $this->command->info('Company PAYE Reference: 7080824016');
     }
 }

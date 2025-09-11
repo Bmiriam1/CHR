@@ -90,7 +90,7 @@ class TestRolesSeeder extends Seeder
         ]);
 
         // Assign roles to test users
-        $admin = User::where('email', 'admin@connecthr.co.za')->first();
+        $admin = User::where('email', 'mmathabo@skillspanda.co.za')->first();
         if ($admin) {
             $admin->assignRole('admin');
         }
@@ -100,12 +100,16 @@ class TestRolesSeeder extends Seeder
             $learner->assignRole('learner');
         }
 
-        // Assign learner role to additional test users
-        $additionalLearners = User::where('email', 'like', 'learner%@connecthr.co.za')
-            ->where('email', '!=', 'learner@connecthr.co.za')
-            ->get();
+        // Assign learner role to IRP5 learners from Connect HR
+        $irp5Learners = User::whereIn('email', [
+            'andile.mdlankomo@connecthr.co.za',
+            'ayanda.thabethe@connecthr.co.za',
+            'bongiwe.nkosi@connecthr.co.za',
+            'kelebogile.pelo@connecthr.co.za',
+            'kwazusomandla.ndaba@connecthr.co.za',
+        ])->get();
         
-        foreach ($additionalLearners as $learnerUser) {
+        foreach ($irp5Learners as $learnerUser) {
             $learnerUser->assignRole('learner');
         }
 

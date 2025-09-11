@@ -12,9 +12,10 @@ class LearnerIRP5Seeder extends Seeder
 {
     public function run(): void
     {
-        $company = Company::first();
+        // Get Connect HR company specifically 
+        $company = Company::where('paye_reference_number', '7080824016')->first();
         if (!$company) {
-            $this->command->error('No company found. Please run company seeder first.');
+            $this->command->error('Connect HR company not found. Please run TestCompanySeeder first.');
             return;
         }
 

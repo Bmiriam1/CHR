@@ -32,10 +32,10 @@ class LeaveRequestController extends Controller
     public function index(): View
     {
         $user = Auth::user();
-        
+
         // Get leave balance summary
         $balanceSummary = $this->leaveService->getLeaveBalanceSummary($user);
-        
+
         // Get recent leave requests
         $recentRequests = LeaveRequest::where('user_id', $user->id)
             ->with(['leaveType', 'program', 'approvedBy'])
@@ -45,14 +45,14 @@ class LeaveRequestController extends Controller
 
         // Get expiring carry over days
         $expiringCarryOver = LeaveCarryOver::getExpiringCarryOverDays($user->id, 30);
-        
+
         // Get accrual summary
         $accrualSummary = LeaveAccrual::getAccrualSummary($user->id);
 
         return view('leave-requests.index', compact(
-            'balanceSummary', 
-            'recentRequests', 
-            'expiringCarryOver', 
+            'balanceSummary',
+            'recentRequests',
+            'expiringCarryOver',
             'accrualSummary'
         ));
     }
@@ -65,7 +65,7 @@ class LeaveRequestController extends Controller
         $user = Auth::user();
         $balanceSummary = $this->leaveService->getLeaveBalanceSummary($user);
         $leaveTypes = LeaveType::getForRole($user->getRoleNames()->first() ?? 'learner');
-        
+
         // Get detailed accrual history
         $accrualHistory = LeaveAccrual::where('user_id', $user->id)
             ->with('leaveType')
@@ -74,8 +74,8 @@ class LeaveRequestController extends Controller
             ->get();
 
         return view('leave-requests.balances', compact(
-            'balanceSummary', 
-            'leaveTypes', 
+            'balanceSummary',
+            'leaveTypes',
             'accrualHistory'
         ));
     }
@@ -88,7 +88,7 @@ class LeaveRequestController extends Controller
         $user = Auth::user();
         $programs = $user->programs()->where('programs.status', 'active')->get();
         $leaveTypes = LeaveType::getForRole($user->getRoleNames()->first() ?? 'learner');
-        
+
         // Get current balances for each leave type
         $balances = [];
         foreach ($leaveTypes as $leaveType) {
@@ -114,7 +114,7 @@ class LeaveRequestController extends Controller
         ]);
 
         $program = Program::findOrFail($request->program_id);
-        
+
         // Check if user is enrolled in the program
         if (!$program->participants()->where('user_id', Auth::id())->exists()) {
             return back()->withErrors(['program_id' => 'You are not enrolled in this program.']);
@@ -165,11 +165,16 @@ class LeaveRequestController extends Controller
         }
 
         $leaveRequest->load(['user', 'program', 'company', 'leaveType', 'approvedBy']);
-        
+
         // Get user's leave balance summary
         $balanceSummary = $this->leaveService->getLeaveBalanceSummary($leaveRequest->user);
 
-        return view('leave-requests.show', compact('leaveRequest', 'balanceSummary'));
+        // Extract variables for view compatibility
+        $user = $leaveRequest->user;
+        $program = $leaveRequest->program;
+        $leaveBalance = $balanceSummary['balance_record'];
+
+        return view('leave-requests.show', compact('leaveRequest', 'balanceSummary', 'user', 'program', 'leaveBalance'));
     }
 
     /**

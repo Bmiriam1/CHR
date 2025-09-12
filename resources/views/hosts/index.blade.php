@@ -1,100 +1,264 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Host Locations</h1>
-                <p class="text-gray-600 dark:text-gray-400 mt-1">Manage check-in/out locations for learners</p>
+    <div class="mt-4 grid grid-cols-12 gap-4 px-[var(--margin-x)] transition-all duration-[.25s] sm:mt-5 sm:gap-5 lg:mt-6 lg:gap-6">
+        <div class="col-span-12">
+            <!-- Page Header -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-medium text-slate-800 dark:text-navy-50 lg:text-2xl">
+                        Host Locations
+                    </h2>
+                    <p class="mt-0.5 text-slate-500 dark:text-navy-200">
+                        Manage check-in/out locations for learners across programs
+                    </p>
+                </div>
+                <div>
+                    <a href="{{ route('hosts.create') }}"
+                       class="btn bg-primary font-medium text-white hover:bg-primary-focus focus:bg-primary-focus active:bg-primary-focus/90">
+                        <i class="fa fa-plus mr-2"></i>
+                        Add Host Location
+                    </a>
+                </div>
             </div>
-            <a href="{{ route('hosts.create') }}"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
-                Add Host Location
-            </a>
-        </div>
 
-        <!-- Hosts Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @forelse($hosts as $host)
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-                    <div class="p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ $host->name }}</h3>
-                            <span
-                                class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $host->is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
-                                {{ $host->is_active ? 'Active' : 'Inactive' }}
-                            </span>
-                        </div>
-
-                        <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                            <p><strong>Program:</strong> {{ $host->program->title ?? 'No Program' }}</p>
-                            <p><strong>Location:</strong> {{ $host->city }}, {{ $host->province }}</p>
-                            <p><strong>Address:</strong> {{ $host->address_line1 }}</p>
-                            <p><strong>Radius:</strong> {{ $host->radius_meters }}m</p>
-                            <p><strong>QR Code:</strong> <code
-                                    class="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">{{ $host->qr_code }}</code></p>
-                        </div>
-
-                        <!-- QR Code Preview -->
-                        <div class="mt-4 flex justify-center">
-                            <div
-                                class="w-32 h-32 border border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-700">
-                                <div class="text-center">
-                                    <svg class="w-20 h-20 mx-auto text-gray-400 dark:text-gray-500" fill="currentColor"
-                                        viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd"
-                                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 0v10h10V4H5z"
-                                            clip-rule="evenodd" />
-                                        <path d="M6 6h2v2H6V6zm4 0h2v2h-2V6zm-4 4h2v2H6v-2zm4 0h2v2h-2v-2z" />
-                                    </svg>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">QR Code</p>
+            <!-- Analytics Cards -->
+            <div class="mt-6 grid grid-cols-12 gap-4 sm:gap-5 lg:gap-6">
+                <!-- Total Hosts -->            
+                <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+                    <div class="card">
+                        <div class="p-4 sm:p-5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-2xl font-semibold text-slate-700 dark:text-navy-100">{{ $analytics['total_hosts'] }}</p>
+                                    <p class="text-xs+ text-slate-400 dark:text-navy-300">Total Locations</p>
+                                </div>
+                                <div class="mask is-squircle flex size-10 items-center justify-center bg-info/10">
+                                    <i class="fa fa-map-marker-alt text-info text-lg"></i>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Actions -->
-                        <div class="mt-4 flex justify-between">
-                            <a href="{{ route('hosts.show', $host) }}"
-                                class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">
-                                View Details
-                            </a>
-                            <a href="{{ route('hosts.edit', $host) }}"
-                                class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300 text-sm font-medium">
-                                Edit
-                            </a>
+                <!-- Active Hosts -->
+                <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+                    <div class="card">
+                        <div class="p-4 sm:p-5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-2xl font-semibold text-slate-700 dark:text-navy-100">{{ $analytics['active_hosts'] }}</p>
+                                    <p class="text-xs+ text-slate-400 dark:text-navy-300">Active Locations</p>
+                                </div>
+                                <div class="mask is-squircle flex size-10 items-center justify-center bg-success/10">
+                                    <i class="fa fa-check-circle text-success text-lg"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            @empty
-                <div class="col-span-full">
-                    <div class="text-center py-12">
-                        <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No host locations</h3>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by creating a new host location.
-                        </p>
-                        <div class="mt-6">
-                            <a href="{{ route('hosts.create') }}"
-                                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                                Add Host Location
-                            </a>
+
+                <!-- Today's Check-ins -->
+                <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+                    <div class="card">
+                        <div class="p-4 sm:p-5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-2xl font-semibold text-slate-700 dark:text-navy-100">{{ $analytics['total_check_ins_today'] }}</p>
+                                    <p class="text-xs+ text-slate-400 dark:text-navy-300">Today's Check-ins</p>
+                                </div>
+                                <div class="mask is-squircle flex size-10 items-center justify-center bg-warning/10">
+                                    <i class="fa fa-clock text-warning text-lg"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            @endforelse
-        </div>
 
-        <!-- Pagination -->
-        @if($hosts->hasPages())
-            <div class="mt-6">
-                {{ $hosts->links() }}
+                <!-- GPS Enabled -->
+                <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+                    <div class="card">
+                        <div class="p-4 sm:p-5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-2xl font-semibold text-slate-700 dark:text-navy-100">{{ $analytics['hosts_with_gps'] }}</p>
+                                    <p class="text-xs+ text-slate-400 dark:text-navy-300">GPS Enabled</p>
+                                </div>
+                                <div class="mask is-squircle flex size-10 items-center justify-center bg-primary/10">
+                                    <i class="fa fa-satellite text-primary text-lg"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        @endif
+
+            <!-- Host Locations -->
+            <div class="mt-6">
+                <div class="card">
+                    <div class="flex items-center justify-between px-4 py-4 sm:px-5">
+                        <h2 class="text-lg font-medium tracking-wide text-slate-700 dark:text-navy-100">
+                            Host Locations
+                            <span class="ml-2 badge bg-slate-150 text-slate-800 dark:bg-navy-500 dark:text-navy-100">{{ $hosts->count() }}</span>
+                        </h2>
+                        @if($hosts->count() === 0)
+                            <a href="{{ route('hosts.create') }}"
+                               class="border-b border-dotted border-current pb-0.5 text-xs+ font-medium text-primary outline-none transition-colors duration-300 hover:text-primary/70 focus:text-primary/70">
+                                Add your first host location
+                            </a>
+                        @endif
+                    </div>
+
+                    <div class="px-4 pb-4 sm:px-5">
+                        @if($hosts->count() > 0)
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                @foreach($hosts as $host)
+                                    <div class="rounded-lg bg-slate-100 p-4 dark:bg-navy-600 hover:bg-slate-200 dark:hover:bg-navy-500 transition-colors">
+                                        <!-- Host Header -->
+                                        <div class="flex items-start justify-between mb-3">
+                                            <div class="flex-1">
+                                                <h4 class="font-semibold text-slate-700 dark:text-navy-100">{{ $host->name }}</h4>
+                                                <p class="text-xs text-slate-400 dark:text-navy-300">{{ $host->program->title ?? 'No Program' }}</p>
+                                            </div>
+                                            <span class="badge {{ $host->is_active ? 'bg-success text-white' : 'bg-error text-white' }}">
+                                                {{ $host->is_active ? 'Active' : 'Inactive' }}
+                                            </span>
+                                        </div>
+
+                                        <!-- Location Info -->
+                                        <div class="mb-3 space-y-1">
+                                            <p class="text-xs text-slate-500 dark:text-navy-400">
+                                                <i class="fa fa-map-marker-alt mr-1"></i>
+                                                {{ $host->city }}, {{ $host->province }}
+                                            </p>
+                                            <p class="text-xs text-slate-500 dark:text-navy-400">
+                                                <i class="fa fa-home mr-1"></i>
+                                                {{ $host->address_line1 }}
+                                            </p>
+                                            <p class="text-xs text-slate-500 dark:text-navy-400">
+                                                <i class="fa fa-circle mr-1"></i>
+                                                {{ $host->radius_meters }}m radius
+                                            </p>
+                                        </div>
+
+                                        <!-- Features -->
+                                        <div class="mb-3 flex flex-wrap gap-1">
+                                            @if($host->requires_gps_validation)
+                                                <span class="badge badge-xs bg-primary text-white">GPS</span>
+                                            @endif
+                                            @if($host->requires_time_validation)
+                                                <span class="badge badge-xs bg-warning text-white">Time</span>
+                                            @endif
+                                            @if($host->allow_multiple_check_ins)
+                                                <span class="badge badge-xs bg-info text-white">Multi</span>
+                                            @endif
+                                            @if($host->require_supervisor_approval)
+                                                <span class="badge badge-xs bg-secondary text-white">Approval</span>
+                                            @endif
+                                        </div>
+
+                                        <!-- QR Code Info -->
+                                        <div class="mb-3 p-2 bg-slate-50 dark:bg-navy-700 rounded text-center">
+                                            <div class="text-slate-400 dark:text-navy-300 mb-1">
+                                                <i class="fa fa-qrcode text-lg"></i>
+                                            </div>
+                                            <p class="text-xs font-mono text-slate-600 dark:text-navy-200">{{ $host->qr_code }}</p>
+                                        </div>
+
+                                        <!-- Action Buttons -->
+                                        <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-navy-500">
+                                            <div class="flex space-x-3">
+                                                <a href="{{ route('hosts.show', $host) }}"
+                                                   class="text-xs font-medium text-primary hover:text-primary-focus">
+                                                    View Details
+                                                </a>
+                                                <a href="{{ route('hosts.edit', $host) }}"
+                                                   class="text-xs font-medium text-warning hover:text-warning-focus">
+                                                    Edit
+                                                </a>
+                                            </div>
+                                            
+                                            <form action="{{ route('hosts.generateQRCode', $host) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit"
+                                                        class="btn bg-info/10 text-info hover:bg-info/20 px-2 py-1 text-xs">
+                                                    <i class="fa fa-sync-alt mr-1"></i>
+                                                    Regenerate QR
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <!-- Empty State -->
+                            <div class="text-center py-12">
+                                <div class="text-slate-400 dark:text-navy-300 mb-4">
+                                    <i class="fa fa-map-marker-alt text-5xl"></i>
+                                </div>
+                                <h3 class="text-lg font-medium text-slate-700 dark:text-navy-100 mb-2">No Host Locations Yet</h3>
+                                <p class="text-slate-500 dark:text-navy-400 mb-6 max-w-sm mx-auto">
+                                    Create host locations where learners can check in and out. Each location can have GPS validation, time restrictions, and QR codes for easy access.
+                                </p>
+                                <a href="{{ route('hosts.create') }}"
+                                   class="btn bg-primary font-medium text-white hover:bg-primary-focus focus:bg-primary-focus active:bg-primary-focus/90">
+                                    <i class="fa fa-plus mr-2"></i>
+                                    Add Your First Host Location
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            @if($hosts->count() > 0)
+            <div class="mt-6">
+                <div class="card">
+                    <div class="flex items-center justify-between px-4 py-4 sm:px-5">
+                        <h2 class="text-lg font-medium tracking-wide text-slate-700 dark:text-navy-100">
+                            Quick Actions
+                        </h2>
+                    </div>
+                    <div class="px-4 pb-4 sm:px-5">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            <a href="{{ route('attendance.index') }}"
+                                class="flex items-center justify-center rounded-lg bg-info/10 p-4 transition-colors hover:bg-info/20">
+                                <div class="text-center">
+                                    <div class="mb-2">
+                                        <i class="fa fa-users text-2xl text-info"></i>
+                                    </div>
+                                    <p class="text-sm font-medium text-info">View Attendance</p>
+                                    <p class="text-xs text-slate-400">Today's check-ins</p>
+                                </div>
+                            </a>
+                            
+                            <a href="{{ route('programs.index') }}"
+                                class="flex items-center justify-center rounded-lg bg-success/10 p-4 transition-colors hover:bg-success/20">
+                                <div class="text-center">
+                                    <div class="mb-2">
+                                        <i class="fa fa-graduation-cap text-2xl text-success"></i>
+                                    </div>
+                                    <p class="text-sm font-medium text-success">View Programs</p>
+                                    <p class="text-xs text-slate-400">Associated programs</p>
+                                </div>
+                            </a>
+                            
+                            <a href="{{ route('hosts.create') }}"
+                                class="flex items-center justify-center rounded-lg bg-warning/10 p-4 transition-colors hover:bg-warning/20">
+                                <div class="text-center">
+                                    <div class="mb-2">
+                                        <i class="fa fa-plus text-2xl text-warning"></i>
+                                    </div>
+                                    <p class="text-sm font-medium text-warning">Add Location</p>
+                                    <p class="text-xs text-slate-400">New host location</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+        </div>
     </div>
 @endsection

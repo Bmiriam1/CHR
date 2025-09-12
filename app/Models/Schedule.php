@@ -22,7 +22,7 @@ class Schedule extends Model
         'company_id',
         'program_id',
         'instructor_id',
-        
+
         // Schedule details
         'title',
         'description',
@@ -35,7 +35,7 @@ class Schedule extends Model
         'planned_duration_hours',
         'break_duration_hours',
         'net_training_hours',
-        
+
         // Recurrence
         'recurrence_type',
         'recurrence_pattern',
@@ -47,7 +47,7 @@ class Schedule extends Model
         'friday',
         'saturday',
         'sunday',
-        
+
         // Location & venue
         'venue_name',
         'venue_address',
@@ -62,21 +62,21 @@ class Schedule extends Model
         'venue_latitude',
         'venue_longitude',
         'geofence_radius',
-        
+
         // QR Code
         'qr_code_content',
         'qr_code_path',
         'qr_code_active',
         'qr_code_valid_from',
         'qr_code_valid_until',
-        
+
         // Curriculum
         'module_name',
         'unit_standard',
         'learning_outcomes',
         'assessment_criteria',
         'required_materials',
-        
+
         // Attendance tracking
         'expected_attendees',
         'actual_attendees',
@@ -85,7 +85,7 @@ class Schedule extends Model
         'check_in_closes_at',
         'allow_late_check_in',
         'late_threshold_minutes',
-        
+
         // Status
         'status',
         'session_type',
@@ -93,12 +93,12 @@ class Schedule extends Model
         'cancelled_at',
         'cancelled_by',
         'rescheduled_from_id',
-        
+
         // Notifications
         'send_reminders',
         'reminder_settings',
         'reminder_sent_at',
-        
+
         // System
         'created_by',
         'additional_settings',
@@ -155,11 +155,11 @@ class Schedule extends Model
             if (!$schedule->session_code) {
                 $schedule->session_code = $schedule->generateSessionCode();
             }
-            
+
             if (!$schedule->qr_code_content) {
                 $schedule->qr_code_content = $schedule->generateQrCodeContent();
             }
-            
+
             $schedule->calculateDuration();
         });
 
@@ -232,7 +232,7 @@ class Schedule extends Model
         $prefix = $this->program?->program_code ?? 'SESS';
         $date = $this->session_date?->format('Ymd') ?? now()->format('Ymd');
         $random = Str::upper(Str::random(4));
-        
+
         return "{$prefix}-{$date}-{$random}";
     }
 
@@ -255,8 +255,13 @@ class Schedule extends Model
 
         $start = Carbon::parse($this->start_time);
         $end = Carbon::parse($this->end_time);
-        
-        $totalMinutes = $end->diffInMinutes($start);
+
+        // Ensure end time is after start time
+        if ($end->lt($start)) {
+            $end->addDay();
+        }
+
+        $totalMinutes = $start->diffInMinutes($end);
         $this->planned_duration_hours = $totalMinutes / 60;
 
         // Calculate break duration
@@ -264,7 +269,7 @@ class Schedule extends Model
             $breakStart = Carbon::parse($this->break_start_time);
             $breakEnd = Carbon::parse($this->break_end_time);
             $breakMinutes = $breakEnd->diffInMinutes($breakStart);
-            
+
             $this->break_duration_hours = $breakMinutes / 60;
             $this->net_training_hours = $this->planned_duration_hours - $this->break_duration_hours;
         } else {
@@ -287,12 +292,12 @@ class Schedule extends Model
         }
 
         $now = now();
-        
+
         // Check QR code validity window
         if ($this->qr_code_valid_from && $now->lt($this->qr_code_valid_from)) {
             return false;
         }
-        
+
         if ($this->qr_code_valid_until && $now->gt($this->qr_code_valid_until)) {
             return false;
         }
@@ -300,14 +305,14 @@ class Schedule extends Model
         // Check session-specific check-in window
         if ($this->check_in_opens_at || $this->check_in_closes_at) {
             $sessionDate = $this->session_date;
-            
+
             if ($this->check_in_opens_at) {
                 $opensAt = $sessionDate->copy()->setTimeFromTimeString($this->check_in_opens_at);
                 if ($now->lt($opensAt)) {
                     return false;
                 }
             }
-            
+
             if ($this->check_in_closes_at) {
                 $closesAt = $sessionDate->copy()->setTimeFromTimeString($this->check_in_closes_at);
                 if ($now->gt($closesAt)) {
@@ -364,10 +369,10 @@ class Schedule extends Model
      */
     public function requiresLocationValidation(): bool
     {
-        return !$this->is_online && 
-               $this->venue_latitude && 
-               $this->venue_longitude && 
-               $this->geofence_radius > 0;
+        return !$this->is_online &&
+            $this->venue_latitude &&
+            $this->venue_longitude &&
+            $this->geofence_radius > 0;
     }
 
     /**
@@ -380,9 +385,9 @@ class Schedule extends Model
         }
 
         $distance = $this->calculateDistance(
-            $this->venue_latitude, 
+            $this->venue_latitude,
             $this->venue_longitude,
-            $latitude, 
+            $latitude,
             $longitude
         );
 
@@ -400,8 +405,8 @@ class Schedule extends Model
         $lonDiff = deg2rad($lon2 - $lon1);
 
         $a = sin($latDiff / 2) * sin($latDiff / 2) +
-             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-             sin($lonDiff / 2) * sin($lonDiff / 2);
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($lonDiff / 2) * sin($lonDiff / 2);
 
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
@@ -418,7 +423,7 @@ class Schedule extends Model
             ->count();
 
         $this->actual_attendees = $totalAttendance;
-        
+
         if ($this->expected_attendees > 0) {
             $this->attendance_rate = ($totalAttendance / $this->expected_attendees) * 100;
         } else {
@@ -465,7 +470,7 @@ class Schedule extends Model
      */
     public function getStatusColor(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'scheduled' => 'blue',
             'in_progress' => 'green',
             'completed' => 'gray',
@@ -482,7 +487,7 @@ class Schedule extends Model
     public function getDaysOfWeek(): array
     {
         $days = [];
-        
+
         if ($this->monday) $days[] = 'Monday';
         if ($this->tuesday) $days[] = 'Tuesday';
         if ($this->wednesday) $days[] = 'Wednesday';
@@ -490,7 +495,7 @@ class Schedule extends Model
         if ($this->friday) $days[] = 'Friday';
         if ($this->saturday) $days[] = 'Saturday';
         if ($this->sunday) $days[] = 'Sunday';
-        
+
         return $days;
     }
 

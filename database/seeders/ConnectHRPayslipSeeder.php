@@ -131,16 +131,23 @@ class ConnectHRPayslipSeeder extends Seeder
                     // Earnings
                     'basic_earnings' => $monthlyGross,
                     'gross_earnings' => $monthlyGross,
+                    'taxable_earnings' => $monthlyGross,
                     'net_pay' => $netPay,
+
+                    // SARS IRP5 Source Codes
+                    'sars_3601' => $monthlyGross, // Basic salary/wages
+                    'sars_3699' => $monthlyGross, // Total remuneration for UIF/SDL purposes
 
                     // Deductions
                     'paye_tax' => $paye,
                     'uif_employee' => $uifEmployee,
                     'uif_employer' => $uifEmployer,
+                    'uif_contribution_base' => $monthlyGross,
                     'total_deductions' => $paye + $uifEmployee,
 
                     // ETI (Employment Tax Incentive) - R1500 from IRP5 data
                     'eti_benefit' => 250.00, // 1500 / 6 months
+                    'eti_eligible' => true,
 
                     // Working days (approximately 22 working days per month)
                     'days_worked' => 22,

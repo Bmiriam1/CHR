@@ -44,3 +44,4 @@ echo "Payslips count with session restored: " . Payslip::count() . "\n";
 
 echo "\nSession debugging complete.\n";
 
+

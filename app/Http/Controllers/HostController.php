@@ -14,12 +14,38 @@ class HostController extends Controller
      */
     public function index()
     {
-        $hosts = Host::with(['program', 'company'])
-            ->where('company_id', auth()->user()->company_id)
-            ->orderBy('name')
-            ->paginate(20);
+        $user = auth()->user();
+        $userCompany = $user->company;
+        
+        // Get all companies in the group for admin users
+        if ($user->hasRole(['admin', 'hr_manager', 'company_admin'])) {
+            $allowedCompanyIds = $userCompany->getCompanyGroup()->pluck('id');
+        } else {
+            $allowedCompanyIds = collect([$userCompany->id]);
+        }
 
-        return view('hosts.index', compact('hosts'));
+        // Load hosts with relationships and analytics
+        $hosts = Host::with(['program', 'company', 'attendanceRecords'])
+            ->whereIn('company_id', $allowedCompanyIds)
+            ->orderBy('name')
+            ->get();
+
+        // Calculate analytics
+        $analytics = [
+            'total_hosts' => $hosts->count(),
+            'active_hosts' => $hosts->where('is_active', true)->count(),
+            'inactive_hosts' => $hosts->where('is_active', false)->count(),
+            'hosts_with_gps' => $hosts->where('requires_gps_validation', true)->count(),
+            'hosts_with_time_validation' => $hosts->where('requires_time_validation', true)->count(),
+            'total_check_ins_today' => $hosts->sum(function($host) {
+                return $host->attendanceRecords->where('attendance_date', now()->toDateString())->count();
+            }),
+        ];
+
+        // Group hosts by program for better organization
+        $hostsByProgram = $hosts->groupBy('program.title');
+
+        return view('hosts.index', compact('hosts', 'analytics', 'hostsByProgram'));
     }
 
     /**
@@ -102,8 +128,42 @@ class HostController extends Controller
      */
     public function show(Host $host)
     {
-        $host->load(['program', 'company']);
-        return view('hosts.show', compact('host'));
+        // Ensure user can access this host
+        $user = auth()->user();
+        $userCompany = $user->company;
+        
+        if ($user->hasRole(['admin', 'hr_manager', 'company_admin'])) {
+            $allowedCompanyIds = $userCompany->getCompanyGroup()->pluck('id');
+        } else {
+            $allowedCompanyIds = collect([$userCompany->id]);
+        }
+
+        if (!$allowedCompanyIds->contains($host->company_id)) {
+            abort(403, 'Access denied to this host location.');
+        }
+
+        $host->load(['program', 'company', 'attendanceRecords.user']);
+
+        // Calculate analytics for this host
+        $analytics = [
+            'total_check_ins' => $host->attendanceRecords->count(),
+            'check_ins_today' => $host->attendanceRecords->where('attendance_date', now()->toDateString())->count(),
+            'check_ins_this_week' => $host->attendanceRecords->where('attendance_date', '>=', now()->startOfWeek())->count(),
+            'check_ins_this_month' => $host->attendanceRecords->where('attendance_date', '>=', now()->startOfMonth())->count(),
+            'unique_users' => $host->attendanceRecords->unique('user_id')->count(),
+            'avg_daily_check_ins' => $host->attendanceRecords->count() > 0 
+                ? round($host->attendanceRecords->count() / max(1, $host->attendanceRecords->groupBy('attendance_date')->count()), 1)
+                : 0,
+        ];
+
+        // Get recent activity
+        $recentActivity = $host->attendanceRecords()
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return view('hosts.show', compact('host', 'analytics', 'recentActivity'));
     }
 
     /**

@@ -7,6 +7,8 @@ use App\Models\Company;
 use App\Models\Program;
 use App\Models\User;
 use App\Models\Device;
+use App\Models\Schedule;
+use App\Models\ProgramParticipant;
 use App\Notifications\ProofApprovedNotification;
 use App\Notifications\ProofRejectedNotification;
 use Illuminate\Http\Request;
@@ -24,7 +26,7 @@ class AttendanceController extends Controller
     public function index(Request $request)
     {
         $query = AttendanceRecord::with(['user', 'program', 'company'])
-            ->where('company_id', auth()->user()->company_id);
+            ->where('company_id', Auth::user()->company_id);
 
         // Filter by date range
         if ($request->filled('start_date')) {
@@ -49,6 +51,11 @@ class AttendanceController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
+        // Filter by schedule
+        if ($request->filled('schedule_id')) {
+            $query->where('schedule_id', $request->schedule_id);
+        }
+
         // Filter by proof status
         if ($request->filled('proof_status')) {
             $query->where('proof_status', $request->proof_status);
@@ -65,14 +72,77 @@ class AttendanceController extends Controller
      */
     public function create()
     {
-        $users = User::where('company_id', auth()->user()->company_id)
+        $users = User::where('company_id', Auth::user()->company_id)
             ->where('is_learner', true)
             ->get();
 
-        $programs = Program::where('company_id', auth()->user()->company_id)
+        $programs = Program::where('company_id', Auth::user()->company_id)
             ->get();
 
         return view('attendance.create', compact('users', 'programs'));
+    }
+
+    /**
+     * Display attendance for a specific schedule.
+     */
+    public function showBySchedule(Request $request, $scheduleId = null)
+    {
+        $scheduleId = $scheduleId ?? $request->get('schedule_id');
+
+        if (!$scheduleId) {
+            return redirect()->back()->with('error', 'Schedule ID is required');
+        }
+
+        // Get the schedule
+        $schedule = Schedule::with(['program'])
+            ->where('company_id', Auth::user()->company_id)
+            ->findOrFail($scheduleId);
+
+        // Get all program participants for this program
+        $participants = ProgramParticipant::with(['user'])
+            ->where('program_id', $schedule->program_id)
+            ->where('company_id', Auth::user()->company_id)
+            ->get();
+
+        // Get existing attendance records for this schedule
+        $attendanceRecords = AttendanceRecord::with(['user'])
+            ->where('schedule_id', $scheduleId)
+            ->where('company_id', Auth::user()->company_id)
+            ->get()
+            ->keyBy('user_id');
+
+        // Create attendance records for participants who don't have one yet
+        $attendanceData = [];
+        foreach ($participants as $participant) {
+            $userId = $participant->user_id;
+            $attendanceRecord = $attendanceRecords->get($userId);
+
+            if (!$attendanceRecord) {
+                // Create a new attendance record with default values
+                $attendanceRecord = new AttendanceRecord([
+                    'company_id' => Auth::user()->company_id,
+                    'user_id' => $userId,
+                    'program_id' => $schedule->program_id,
+                    'schedule_id' => $scheduleId,
+                    'attendance_date' => $schedule->session_date,
+                    'status' => 'pending_approval',
+                    'attendance_type' => 'regular',
+                    'is_payable' => false,
+                    'daily_rate_applied' => 0,
+                    'calculated_pay' => 0,
+                    'hours_worked' => 0,
+                    'partial_day_percentage' => 0,
+                ]);
+            }
+
+            $attendanceData[] = [
+                'participant' => $participant,
+                'user' => $participant->user,
+                'attendance' => $attendanceRecord,
+            ];
+        }
+
+        return view('attendance.schedule', compact('schedule', 'attendanceData', 'participants'));
     }
 
     /**
@@ -98,7 +168,7 @@ class AttendanceController extends Controller
         }
 
         // Check if attendance record already exists for this user/date/program
-        $existingRecord = AttendanceRecord::where('company_id', auth()->user()->company_id)
+        $existingRecord = AttendanceRecord::where('company_id', Auth::user()->company_id)
             ->where('user_id', $request->user_id)
             ->where('program_id', $request->program_id)
             ->where('attendance_date', $request->attendance_date)
@@ -111,7 +181,7 @@ class AttendanceController extends Controller
         }
 
         $attendanceRecord = AttendanceRecord::create([
-            'company_id' => auth()->user()->company_id,
+            'company_id' => Auth::user()->company_id,
             'user_id' => $request->user_id,
             'program_id' => $request->program_id,
             'attendance_date' => $request->attendance_date,
@@ -142,11 +212,11 @@ class AttendanceController extends Controller
      */
     public function edit(AttendanceRecord $attendance)
     {
-        $users = User::where('company_id', auth()->user()->company_id)
+        $users = User::where('company_id', Auth::user()->company_id)
             ->where('is_learner', true)
             ->get();
 
-        $programs = Program::where('company_id', auth()->user()->company_id)
+        $programs = Program::where('company_id', Auth::user()->company_id)
             ->get();
 
         return view('attendance.edit', compact('attendance', 'users', 'programs'));
@@ -225,7 +295,7 @@ class AttendanceController extends Controller
         foreach ($request->user_ids as $userId) {
             $attendanceRecord = AttendanceRecord::updateOrCreate(
                 [
-                    'company_id' => auth()->user()->company_id,
+                    'company_id' => Auth::user()->company_id,
                     'user_id' => $userId,
                     'program_id' => $request->program_id,
                     'attendance_date' => $request->attendance_date,
@@ -266,7 +336,7 @@ class AttendanceController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $user = auth()->user();
+        $user = Auth::user();
         $today = now()->toDateString();
 
         // Check if attendance record already exists for today
@@ -344,7 +414,7 @@ class AttendanceController extends Controller
             return response()->json(['error' => 'Only pending proof documents can be approved.'], 400);
         }
 
-        $attendance->approveProof(auth()->user(), $request->notes);
+        $attendance->approveProof(Auth::user(), $request->notes);
 
         // Send notification to learner
         $attendance->learner->notify(new ProofApprovedNotification($attendance));
@@ -372,7 +442,7 @@ class AttendanceController extends Controller
             return response()->json(['error' => 'Only pending proof documents can be rejected.'], 400);
         }
 
-        $attendance->rejectProof(auth()->user(), $request->notes);
+        $attendance->rejectProof(Auth::user(), $request->notes);
 
         // Send notification to learner
         $attendance->learner->notify(new ProofRejectedNotification($attendance, $request->notes));
@@ -389,7 +459,7 @@ class AttendanceController extends Controller
     public function pendingProof()
     {
         $attendanceRecords = AttendanceRecord::with(['user', 'program'])
-            ->where('company_id', auth()->user()->company_id)
+            ->where('company_id', Auth::user()->company_id)
             ->withPendingProof()
             ->orderBy('attendance_date', 'desc')
             ->paginate(20);
@@ -412,7 +482,7 @@ class AttendanceController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $query = AttendanceRecord::where('company_id', auth()->user()->company_id)
+        $query = AttendanceRecord::where('company_id', Auth::user()->company_id)
             ->whereBetween('attendance_date', [$request->start_date, $request->end_date]);
 
         if ($request->filled('program_id')) {

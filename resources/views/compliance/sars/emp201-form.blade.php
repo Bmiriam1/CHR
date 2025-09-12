@@ -1,8 +1,10 @@
 @extends('layouts.app')
 
+@extends('layouts.app')
+
 @section('content')
-    <div class="container px-4 sm:px-5">
-        <div class="py-4 lg:py-6">
+    <div class="mt-4 grid grid-cols-12 gap-4 px-[var(--margin-x)] transition-all duration-[.25s] sm:mt-5 sm:gap-5 lg:mt-6 lg:gap-6">
+        <div class="col-span-12">
             <!-- Page Header -->
             <div class="flex items-center justify-between">
                 <div>
@@ -19,6 +21,69 @@
                         <i class="fa fa-arrow-left mr-2"></i>
                         Back to Dashboard
                     </a>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <!-- Current Month -->
+                <div class="card">
+                    <div class="p-4">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-xl font-semibold text-slate-700 dark:text-navy-100">{{ now()->format('F') }}</p>
+                                <p class="text-xs+ text-slate-400 dark:text-navy-300">Current Period</p>
+                            </div>
+                            <div class="mask is-squircle flex size-10 items-center justify-center bg-primary/10">
+                                <i class="fa fa-calendar text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Due Date -->
+                <div class="card">
+                    <div class="p-4">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-xl font-semibold text-slate-700 dark:text-navy-100">{{ now()->addMonth()->day(7)->format('j M') }}</p>
+                                <p class="text-xs+ text-slate-400 dark:text-navy-300">Next Due Date</p>
+                            </div>
+                            <div class="mask is-squircle flex size-10 items-center justify-center bg-warning/10">
+                                <i class="fa fa-clock text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SARS eFiling -->
+                <div class="card">
+                    <div class="p-4">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-lg font-semibold text-slate-700 dark:text-navy-100">Excel</p>
+                                <p class="text-xs+ text-slate-400 dark:text-navy-300">Output Format</p>
+                            </div>
+                            <div class="mask is-squircle flex size-10 items-center justify-center bg-success/10">
+                                <i class="fa fa-file-excel text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compliance Status -->
+                <div class="card">
+                    <div class="p-4">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-lg font-semibold text-slate-700 dark:text-navy-100">Ready</p>
+                                <p class="text-xs+ text-slate-400 dark:text-navy-300">System Status</p>
+                            </div>
+                            <div class="mask is-squircle flex size-10 items-center justify-center bg-info/10">
+                                <i class="fa fa-check-circle text-info"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -94,9 +159,9 @@
                             </div>
 
                             <!-- Information Box -->
-                            <div class="rounded-lg bg-info/10 p-4">
+                            <div class="rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 p-4">
                                 <div class="flex items-start space-x-3">
-                                    <div class="flex size-8 items-center justify-center rounded-full bg-info text-white">
+                                    <div class="flex size-8 items-center justify-center rounded-full bg-primary text-white">
                                         <i class="fa fa-info text-xs"></i>
                                     </div>
                                     <div>
@@ -108,9 +173,18 @@
                                             This form will generate an Excel file with all required calculations and data.
                                         </p>
                                         <ul class="mt-2 text-xs text-slate-500 dark:text-navy-300 space-y-1">
-                                            <li>• Includes PAYE, UIF, SDL, and ETI calculations</li>
-                                            <li>• Generates Excel format (.xlsx) for easy viewing and submission</li>
-                                            <li>• Automatically calculates net PAYE due after ETI benefits</li>
+                                            <li class="flex items-center space-x-2">
+                                                <i class="fa fa-check text-primary text-xs"></i>
+                                                <span>Includes PAYE, UIF, SDL, and ETI calculations</span>
+                                            </li>
+                                            <li class="flex items-center space-x-2">
+                                                <i class="fa fa-check text-primary text-xs"></i>
+                                                <span>Generates Excel format (.xlsx) for easy viewing and submission</span>
+                                            </li>
+                                            <li class="flex items-center space-x-2">
+                                                <i class="fa fa-check text-primary text-xs"></i>
+                                                <span>Automatically calculates net PAYE due after ETI benefits</span>
+                                            </li>
                                         </ul>
                                     </div>
                                 </div>

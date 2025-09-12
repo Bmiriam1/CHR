@@ -171,6 +171,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the leave requests for this user.
+     */
+    public function leaveRequests()
+    {
+        return $this->hasMany(\App\Models\LeaveRequest::class);
+    }
+
+    /**
      * Send the password reset notification.
      */
     public function sendPasswordResetNotification($token)

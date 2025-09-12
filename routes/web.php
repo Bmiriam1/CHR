@@ -111,6 +111,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('attendance', AttendanceController::class);
     Route::get('attendance/pending-proof', [AttendanceController::class, 'pendingProof'])->name('attendance.pending-proof');
     Route::get('attendance/summary', [AttendanceController::class, 'summary'])->name('attendance.summary');
+    Route::get('attendance/schedule/{scheduleId?}', [AttendanceController::class, 'showBySchedule'])->name('attendance.schedule');
 
     // Bulk Operations
     Route::post('attendance/bulk-mark', [AttendanceController::class, 'bulkMark'])->name('attendance.bulk-mark');

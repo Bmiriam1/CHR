@@ -58,52 +58,52 @@
                     </div>
                     <div class="mt-3 flex items-center space-x-2">
                         <div class="ax-transparent-gridline w-28">
-                            <div
-                                x-init="$nextTick(() => { 
-                                    var attendanceData = {
-                                        series: [{{ $attendanceRate }}],
-                                        options: {
-                                            chart: {
-                                                type: 'radialBar',
-                                                height: 100,
-                                                sparkline: { enabled: true }
-                                            },
-                                            plotOptions: {
-                                                radialBar: {
-                                                    hollow: { margin: 0, size: '50%' },
-                                                    track: { margin: 1 },
-                                                    dataLabels: { show: false }
-                                                }
-                                            },
-                                            colors: ['#10b981']
-                                        }
-                                    };
-                                    $el._x_chart = new ApexCharts($el, attendanceData); 
-                                    $el._x_chart.render(); 
-                                });">
+                            <div x-init="$nextTick(() => { 
+                                        var attendanceData = {
+                                            series: [{{ $attendanceRate }}],
+                                            options: {
+                                                chart: {
+                                                    type: 'radialBar',
+                                                    height: 100,
+                                                    sparkline: { enabled: true }
+                                                },
+                                                plotOptions: {
+                                                    radialBar: {
+                                                        hollow: { margin: 0, size: '50%' },
+                                                        track: { margin: 1 },
+                                                        dataLabels: { show: false }
+                                                    }
+                                                },
+                                                colors: ['#10b981']
+                                            }
+                                        };
+                                        $el._x_chart = new ApexCharts($el, attendanceData); 
+                                        $el._x_chart.render(); 
+                                    });">
                             </div>
                         </div>
                         <div class="flex items-center space-x-0.5">
                             @if($attendanceRate >= 90)
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-success" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M7 11l5-5m0 0l5 5m-5-5v12" />
-                            </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-success" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                                </svg>
                             @elseif($attendanceRate >= 75)
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-warning" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                            </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-warning" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
                             @else
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-error" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-                            </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-error" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                                </svg>
                             @endif
-                            <p class="text-sm-plus {{ $attendanceRate >= 90 ? 'text-success' : ($attendanceRate >= 75 ? 'text-warning' : 'text-error') }} dark:text-navy-100">
+                            <p
+                                class="text-sm-plus {{ $attendanceRate >= 90 ? 'text-success' : ($attendanceRate >= 75 ? 'text-warning' : 'text-error') }} dark:text-navy-100">
                                 {{ $trends['present_days']['value'] ?? 0 }}/{{ $attendanceTotal }}
                             </p>
                         </div>
@@ -121,69 +121,68 @@
                 </div>
 
                 <div class="ax-transparent-gridline grid w-full grid-cols-1">
-                    <div
-                        x-init="$nextTick(() => { 
-                            var monthlyData = {
-                                series: [{
-                                    name: 'Present Days',
-                                    data: [
-                                        {{ $trends['present_days']['value'] ?? 0 }},
-                                        {{ ($previousMetrics['present_days'] ?? 0) }},
-                                        {{ max(0, ($trends['present_days']['value'] ?? 0) - 5) }},
-                                        {{ max(0, ($trends['present_days']['value'] ?? 0) - 3) }},
-                                        {{ max(0, ($trends['present_days']['value'] ?? 0) - 8) }},
-                                        {{ max(0, ($trends['present_days']['value'] ?? 0) - 2) }}
-                                    ]
-                                }, {
-                                    name: 'Absent Days',
-                                    data: [
-                                        {{ $trends['absent_days']['value'] ?? 0 }},
-                                        {{ ($previousMetrics['absent_days'] ?? 0) }},
-                                        {{ max(0, ($trends['absent_days']['value'] ?? 0) - 2) }},
-                                        {{ max(0, ($trends['absent_days']['value'] ?? 0) - 1) }},
-                                        {{ max(0, ($trends['absent_days']['value'] ?? 0) + 2) }},
-                                        {{ max(0, ($trends['absent_days']['value'] ?? 0) + 1) }}
-                                    ]
-                                }],
-                                options: {
-                                    chart: {
-                                        type: 'area',
-                                        height: 300,
-                                        toolbar: { show: false }
-                                    },
-                                    colors: ['#10b981', '#f59e0b'],
-                                    fill: {
-                                        type: 'gradient',
-                                        gradient: {
-                                            shadeIntensity: 1,
-                                            opacityFrom: 0.3,
-                                            opacityTo: 0.1
+                    <div x-init="$nextTick(() => { 
+                                var monthlyData = {
+                                    series: [{
+                                        name: 'Present Days',
+                                        data: [
+                                            {{ $trends['present_days']['value'] ?? 0 }},
+                                            {{ ($previousMetrics['present_days'] ?? 0) }},
+                                            {{ max(0, ($trends['present_days']['value'] ?? 0) - 5) }},
+                                            {{ max(0, ($trends['present_days']['value'] ?? 0) - 3) }},
+                                            {{ max(0, ($trends['present_days']['value'] ?? 0) - 8) }},
+                                            {{ max(0, ($trends['present_days']['value'] ?? 0) - 2) }}
+                                        ]
+                                    }, {
+                                        name: 'Absent Days',
+                                        data: [
+                                            {{ $trends['absent_days']['value'] ?? 0 }},
+                                            {{ ($previousMetrics['absent_days'] ?? 0) }},
+                                            {{ max(0, ($trends['absent_days']['value'] ?? 0) - 2) }},
+                                            {{ max(0, ($trends['absent_days']['value'] ?? 0) - 1) }},
+                                            {{ max(0, ($trends['absent_days']['value'] ?? 0) + 2) }},
+                                            {{ max(0, ($trends['absent_days']['value'] ?? 0) + 1) }}
+                                        ]
+                                    }],
+                                    options: {
+                                        chart: {
+                                            type: 'area',
+                                            height: 300,
+                                            toolbar: { show: false }
+                                        },
+                                        colors: ['#10b981', '#f59e0b'],
+                                        fill: {
+                                            type: 'gradient',
+                                            gradient: {
+                                                shadeIntensity: 1,
+                                                opacityFrom: 0.3,
+                                                opacityTo: 0.1
+                                            }
+                                        },
+                                        dataLabels: { enabled: false },
+                                        stroke: { curve: 'smooth', width: 2 },
+                                        grid: {
+                                            borderColor: '#e2e8f0',
+                                            strokeDashArray: 3
+                                        },
+                                        xaxis: {
+                                            categories: ['This Month', 'Last Month', 'Month -2', 'Month -3', 'Month -4', 'Month -5'],
+                                            axisBorder: { show: false },
+                                            axisTicks: { show: false }
+                                        },
+                                        yaxis: {
+                                            show: true,
+                                            title: { text: 'Days' }
+                                        },
+                                        legend: {
+                                            position: 'top',
+                                            horizontalAlign: 'right'
                                         }
-                                    },
-                                    dataLabels: { enabled: false },
-                                    stroke: { curve: 'smooth', width: 2 },
-                                    grid: {
-                                        borderColor: '#e2e8f0',
-                                        strokeDashArray: 3
-                                    },
-                                    xaxis: {
-                                        categories: ['This Month', 'Last Month', 'Month -2', 'Month -3', 'Month -4', 'Month -5'],
-                                        axisBorder: { show: false },
-                                        axisTicks: { show: false }
-                                    },
-                                    yaxis: {
-                                        show: true,
-                                        title: { text: 'Days' }
-                                    },
-                                    legend: {
-                                        position: 'top',
-                                        horizontalAlign: 'right'
                                     }
-                                }
-                            };
-                            $el._x_chart = new ApexCharts($el, monthlyData); 
-                            $el._x_chart.render(); 
-                        });">
+                                };
+                                $el._x_chart = new ApexCharts($el, monthlyData); 
+                                $el._x_chart.render(); 
+                            });">
                     </div>
                 </div>
             </div>
@@ -204,7 +203,7 @@
                     </div>
                     <p class="mt-1 text-xs-plus">Monthly Earnings</p>
                 </div>
-                
+
                 <!-- Present Days -->
                 <div class="rounded-lg bg-slate-150 p-4 dark:bg-navy-700">
                     <div class="flex justify-between">
@@ -219,7 +218,7 @@
                     </div>
                     <p class="mt-1 text-xs-plus">Present Days</p>
                 </div>
-                
+
                 <!-- Active Employees -->
                 <div class="rounded-lg bg-slate-150 p-4 dark:bg-navy-700">
                     <div class="flex justify-between">
@@ -234,7 +233,7 @@
                     </div>
                     <p class="mt-1 text-xs-plus">Active Employees</p>
                 </div>
-                
+
                 <!-- Active Programs -->
                 <div class="rounded-lg bg-slate-150 p-4 dark:bg-navy-700">
                     <div class="flex justify-between">
@@ -249,7 +248,7 @@
                     </div>
                     <p class="mt-1 text-xs-plus">Training Programs</p>
                 </div>
-                
+
                 <!-- Payslips Generated -->
                 <div class="rounded-lg bg-slate-150 p-4 dark:bg-navy-700">
                     <div class="flex justify-between space-x-1">
@@ -264,7 +263,7 @@
                     </div>
                     <p class="mt-1 text-xs-plus">Payslips</p>
                 </div>
-                
+
                 <!-- Total Learners -->
                 <div class="rounded-lg bg-slate-150 p-4 dark:bg-navy-700">
                     <div class="flex justify-between">
@@ -280,6 +279,148 @@
                         </svg>
                     </div>
                     <p class="mt-1 text-xs-plus">Learners</p>
+                </div>
+
+                <!-- Total Schedules -->
+                <div class="rounded-lg bg-slate-150 p-4 dark:bg-navy-700">
+                    <div class="flex justify-between">
+                        <p class="text-xl font-semibold text-slate-700 dark:text-navy-100">
+                            {{ $trends['total_schedules']['value'] ?? 0 }}
+                        </p>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-info" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <p class="mt-1 text-xs-plus">Schedules</p>
+                </div>
+
+                <!-- Upcoming Schedules -->
+                <div class="rounded-lg bg-slate-150 p-4 dark:bg-navy-700">
+                    <div class="flex justify-between">
+                        <p class="text-xl font-semibold text-slate-700 dark:text-navy-100">
+                            {{ $trends['upcoming_schedules']['value'] ?? 0 }}
+                        </p>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-warning" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <p class="mt-1 text-xs-plus">Upcoming</p>
+                </div>
+
+                <!-- Budget Utilization -->
+                <div class="rounded-lg bg-slate-150 p-4 dark:bg-navy-700">
+                    <div class="flex justify-between">
+                        <p class="text-xl font-semibold text-slate-700 dark:text-navy-100">
+                            {{ $trends['budget_utilization']['value'] ?? 0 }}%
+                        </p>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-primary" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <p class="mt-1 text-xs-plus">Budget Used</p>
+                </div>
+
+                <!-- Active Budgets -->
+                <div class="rounded-lg bg-slate-150 p-4 dark:bg-navy-700">
+                    <div class="flex justify-between">
+                        <p class="text-xl font-semibold text-slate-700 dark:text-navy-100">
+                            {{ $trends['active_budgets']['value'] ?? 0 }}
+                        </p>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-success" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <p class="mt-1 text-xs-plus">Active Budgets</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Breakdown by Type -->
+        <div class="card col-span-12">
+            <div class="flex items-center justify-between py-3 px-4">
+                <h2 class="font-medium tracking-wide text-slate-700 dark:text-navy-100">
+                    Attendance Breakdown by Type
+                </h2>
+            </div>
+            <div class="px-4 pb-4">
+                <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    <!-- Online Attendance -->
+                    <div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-2xl font-semibold text-blue-600 dark:text-blue-400">
+                                    {{ $trends['online_attendance']['value'] ?? 0 }}
+                                </p>
+                                <p class="text-sm text-blue-500 dark:text-blue-300">Online Sessions</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-8 text-blue-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Onsite Attendance -->
+                    <div class="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-2xl font-semibold text-green-600 dark:text-green-400">
+                                    {{ $trends['onsite_attendance']['value'] ?? 0 }}
+                                </p>
+                                <p class="text-sm text-green-500 dark:text-green-300">Onsite Sessions</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-8 text-green-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Travel Attendance -->
+                    <div class="rounded-lg bg-purple-50 p-4 dark:bg-purple-900/20">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-2xl font-semibold text-purple-600 dark:text-purple-400">
+                                    {{ $trends['travel_attendance']['value'] ?? 0 }}
+                                </p>
+                                <p class="text-sm text-purple-500 dark:text-purple-300">Travel Sessions</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-8 text-purple-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Equipment Attendance -->
+                    <div class="rounded-lg bg-orange-50 p-4 dark:bg-orange-900/20">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-2xl font-semibold text-orange-600 dark:text-orange-400">
+                                    {{ $trends['equipment_attendance']['value'] ?? 0 }}
+                                </p>
+                                <p class="text-sm text-orange-500 dark:text-orange-300">Equipment Sessions</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-8 text-orange-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -307,15 +448,18 @@
                             <ul>
                                 <li>
                                     <a href="{{ route('attendance.index') }}"
-                                        class="flex h-8 items-center px-3 pr-8 font-medium tracking-wide outline-hidden transition-all hover:bg-slate-100 hover:text-slate-800 focus:bg-slate-100 focus:text-slate-800 dark:hover:bg-navy-600 dark:hover:text-navy-100 dark:focus:bg-navy-600 dark:focus:text-navy-100">View Attendance</a>
+                                        class="flex h-8 items-center px-3 pr-8 font-medium tracking-wide outline-hidden transition-all hover:bg-slate-100 hover:text-slate-800 focus:bg-slate-100 focus:text-slate-800 dark:hover:bg-navy-600 dark:hover:text-navy-100 dark:focus:bg-navy-600 dark:focus:text-navy-100">View
+                                        Attendance</a>
                                 </li>
                                 <li>
                                     <a href="{{ route('payslips.index') }}"
-                                        class="flex h-8 items-center px-3 pr-8 font-medium tracking-wide outline-hidden transition-all hover:bg-slate-100 hover:text-slate-800 focus:bg-slate-100 focus:text-slate-800 dark:hover:bg-navy-600 dark:hover:text-navy-100 dark:focus:bg-navy-600 dark:focus:text-navy-100">View Payslips</a>
+                                        class="flex h-8 items-center px-3 pr-8 font-medium tracking-wide outline-hidden transition-all hover:bg-slate-100 hover:text-slate-800 focus:bg-slate-100 focus:text-slate-800 dark:hover:bg-navy-600 dark:hover:text-navy-100 dark:focus:bg-navy-600 dark:focus:text-navy-100">View
+                                        Payslips</a>
                                 </li>
                                 <li>
                                     <a href="{{ route('programs.index') }}"
-                                        class="flex h-8 items-center px-3 pr-8 font-medium tracking-wide outline-hidden transition-all hover:bg-slate-100 hover:text-slate-800 focus:bg-slate-100 focus:text-slate-800 dark:hover:bg-navy-600 dark:hover:text-navy-100 dark:focus:bg-navy-600 dark:focus:text-navy-100">View Programs</a>
+                                        class="flex h-8 items-center px-3 pr-8 font-medium tracking-wide outline-hidden transition-all hover:bg-slate-100 hover:text-slate-800 focus:bg-slate-100 focus:text-slate-800 dark:hover:bg-navy-600 dark:hover:text-navy-100 dark:focus:bg-navy-600 dark:focus:text-navy-100">View
+                                        Programs</a>
                                 </li>
                             </ul>
                         </div>
@@ -347,34 +491,36 @@
                         </thead>
                         <tbody>
                             @forelse($recentActivities as $activity)
-                            <tr class="border-y border-transparent border-b-slate-200 dark:border-b-navy-500">
-                                <td class="whitespace-nowrap px-4 py-3 lg:px-5">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="mask is-squircle flex size-8 items-center justify-center bg-{{ $activity['color'] }}/10">
-                                            <i class="fa {{ $activity['icon'] }} text-{{ $activity['color'] }} text-xs"></i>
+                                <tr class="border-y border-transparent border-b-slate-200 dark:border-b-navy-500">
+                                    <td class="whitespace-nowrap px-4 py-3 lg:px-5">
+                                        <div class="flex items-center space-x-3">
+                                            <div
+                                                class="mask is-squircle flex size-8 items-center justify-center bg-{{ $activity['color'] }}/10">
+                                                <i class="fa {{ $activity['icon'] }} text-{{ $activity['color'] }} text-xs"></i>
+                                            </div>
+                                            <span class="font-medium">{{ $activity['title'] }}</span>
                                         </div>
-                                        <span class="font-medium">{{ $activity['title'] }}</span>
-                                    </div>
-                                </td>
-                                <td class="whitespace-nowrap px-4 py-3 lg:px-5">
-                                    {{ $activity['description'] }}
-                                </td>
-                                <td class="whitespace-nowrap px-4 py-3 lg:px-5">
-                                    {{ $activity['date']->format('M j, Y') }}
-                                </td>
-                                <td class="whitespace-nowrap px-4 py-3 lg:px-5">
-                                    <div class="badge rounded-full border border-{{ $activity['color'] }} text-{{ $activity['color'] }}">
-                                        {{ ucfirst($activity['type']) }}
-                                    </div>
-                                </td>
-                            </tr>
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-3 lg:px-5">
+                                        {{ $activity['description'] }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-3 lg:px-5">
+                                        {{ $activity['date']->format('M j, Y') }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-3 lg:px-5">
+                                        <div
+                                            class="badge rounded-full border border-{{ $activity['color'] }} text-{{ $activity['color'] }}">
+                                            {{ ucfirst($activity['type']) }}
+                                        </div>
+                                    </td>
+                                </tr>
                             @empty
-                            <tr>
-                                <td colspan="4" class="text-center py-8">
-                                    <i class="fa fa-inbox text-slate-300 text-4xl mb-4"></i>
-                                    <p class="text-slate-500 dark:text-navy-300">No recent activities</p>
-                                </td>
-                            </tr>
+                                <tr>
+                                    <td colspan="4" class="text-center py-8">
+                                        <i class="fa fa-inbox text-slate-300 text-4xl mb-4"></i>
+                                        <p class="text-slate-500 dark:text-navy-300">No recent activities</p>
+                                    </td>
+                                </tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -391,63 +537,66 @@
             </div>
             <div class="px-4 pb-4">
                 @if(isset($complianceMetrics))
-                <div class="space-y-4">
-                    <!-- YTD PAYE -->
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="mask is-squircle flex size-8 items-center justify-center bg-error/10">
-                                <i class="fa fa-receipt text-error text-xs"></i>
+                    <div class="space-y-4">
+                        <!-- YTD PAYE -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="mask is-squircle flex size-8 items-center justify-center bg-error/10">
+                                    <i class="fa fa-receipt text-error text-xs"></i>
+                                </div>
+                                <span class="text-sm font-medium">YTD PAYE</span>
                             </div>
-                            <span class="text-sm font-medium">YTD PAYE</span>
+                            <span class="font-semibold">R{{ number_format($complianceMetrics['ytd_paye'] ?? 0, 0) }}</span>
                         </div>
-                        <span class="font-semibold">R{{ number_format($complianceMetrics['ytd_paye'] ?? 0, 0) }}</span>
-                    </div>
 
-                    <!-- YTD UIF -->
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="mask is-squircle flex size-8 items-center justify-center bg-secondary/10">
-                                <i class="fa fa-shield-alt text-secondary text-xs"></i>
+                        <!-- YTD UIF -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="mask is-squircle flex size-8 items-center justify-center bg-secondary/10">
+                                    <i class="fa fa-shield-alt text-secondary text-xs"></i>
+                                </div>
+                                <span class="text-sm font-medium">YTD UIF</span>
                             </div>
-                            <span class="text-sm font-medium">YTD UIF</span>
+                            <span class="font-semibold">R{{ number_format($complianceMetrics['ytd_uif'] ?? 0, 0) }}</span>
                         </div>
-                        <span class="font-semibold">R{{ number_format($complianceMetrics['ytd_uif'] ?? 0, 0) }}</span>
-                    </div>
 
-                    <!-- YTD ETI -->
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="mask is-squircle flex size-8 items-center justify-center bg-success/10">
-                                <i class="fa fa-hand-holding-usd text-success text-xs"></i>
+                        <!-- YTD ETI -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="mask is-squircle flex size-8 items-center justify-center bg-success/10">
+                                    <i class="fa fa-hand-holding-usd text-success text-xs"></i>
+                                </div>
+                                <span class="text-sm font-medium">YTD ETI Benefit</span>
                             </div>
-                            <span class="text-sm font-medium">YTD ETI Benefit</span>
+                            <span
+                                class="font-semibold text-success">R{{ number_format($complianceMetrics['ytd_eti'] ?? 0, 0) }}</span>
                         </div>
-                        <span class="font-semibold text-success">R{{ number_format($complianceMetrics['ytd_eti'] ?? 0, 0) }}</span>
+
+                        <hr class="border-slate-200 dark:border-navy-500">
+
+                        <!-- Quick Actions -->
+                        <div class="space-y-2">
+                            <a href="{{ route('compliance.dashboard') }}"
+                                class="flex items-center justify-between rounded-lg bg-slate-100 p-3 transition-colors hover:bg-slate-200 dark:bg-navy-600 dark:hover:bg-navy-500">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fa fa-clipboard-check text-success text-sm"></i>
+                                    <span class="text-sm font-medium">Compliance Dashboard</span>
+                                </div>
+                                <i class="fa fa-chevron-right text-xs text-slate-400"></i>
+                            </a>
+
+                            <a href="{{ route('compliance.tax_certificates.index') }}"
+                                class="flex items-center justify-between rounded-lg bg-slate-100 p-3 transition-colors hover:bg-slate-200 dark:bg-navy-600 dark:hover:bg-navy-500">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fa fa-certificate text-warning text-sm"></i>
+                                    <span class="text-sm font-medium">Tax Certificates</span>
+                                </div>
+                                <i class="fa fa-chevron-right text-xs text-slate-400"></i>
+                            </a>
+                        </div>
                     </div>
-
-                    <hr class="border-slate-200 dark:border-navy-500">
-
-                    <!-- Quick Actions -->
-                    <div class="space-y-2">
-                        <a href="{{ route('compliance.dashboard') }}" class="flex items-center justify-between rounded-lg bg-slate-100 p-3 transition-colors hover:bg-slate-200 dark:bg-navy-600 dark:hover:bg-navy-500">
-                            <div class="flex items-center space-x-2">
-                                <i class="fa fa-clipboard-check text-success text-sm"></i>
-                                <span class="text-sm font-medium">Compliance Dashboard</span>
-                            </div>
-                            <i class="fa fa-chevron-right text-xs text-slate-400"></i>
-                        </a>
-
-                        <a href="{{ route('compliance.tax_certificates.index') }}" class="flex items-center justify-between rounded-lg bg-slate-100 p-3 transition-colors hover:bg-slate-200 dark:bg-navy-600 dark:hover:bg-navy-500">
-                            <div class="flex items-center space-x-2">
-                                <i class="fa fa-certificate text-warning text-sm"></i>
-                                <span class="text-sm font-medium">Tax Certificates</span>
-                            </div>
-                            <i class="fa fa-chevron-right text-xs text-slate-400"></i>
-                        </a>
-                    </div>
-                </div>
                 @else
-                <p class="text-slate-500 dark:text-navy-300 text-center py-4">No compliance data available</p>
+                    <p class="text-slate-500 dark:text-navy-300 text-center py-4">No compliance data available</p>
                 @endif
             </div>
         </div>

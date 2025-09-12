@@ -178,7 +178,7 @@
                                                 </a>
                                             </div>
                                             
-                                            <form action="{{ route('hosts.generateQRCode', $host) }}" method="POST" class="inline">
+                                            <form action="{{ route('hosts.generate-qr', $host) }}" method="POST" class="inline">
                                                 @csrf
                                                 <button type="submit"
                                                         class="btn bg-info/10 text-info hover:bg-info/20 px-2 py-1 text-xs">

@@ -21,47 +21,48 @@
                     </a>
                 </div>
             </div>
-            <!-- Primary Client Stats -->            
-            <div class="mt-6 grid grid-cols-12 gap-4 sm:gap-5 lg:gap-6">
-                <!-- Primary Client -->
-                <div class="card col-span-12 lg:col-span-8">
-                    <div class="p-4 sm:p-5">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h3 class="text-lg font-semibold text-slate-700 dark:text-navy-100">{{ $rootCompany->name }}</h3>
-                                <p class="text-xs text-primary">Primary Client</p>
-                                @if($rootCompany->trading_name && $rootCompany->trading_name !== $rootCompany->name)
-                                    <p class="text-xs text-slate-400 dark:text-navy-300">Trading as: {{ $rootCompany->trading_name }}</p>
-                                @endif
-                            </div>
-                            <div class="mask is-squircle flex size-12 items-center justify-center bg-primary/10">
-                                <i class="fa fa-building text-primary text-xl"></i>
-                            </div>
+        </div>
+        
+        <!-- Primary Client Card -->
+        <div class="col-span-12 lg:col-span-8">
+            <div class="card">
+                <div class="p-4 sm:p-5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-700 dark:text-navy-100">{{ $rootCompany->name }}</h3>
+                            <p class="text-xs text-primary">Primary Client</p>
+                            @if($rootCompany->trading_name && $rootCompany->trading_name !== $rootCompany->name)
+                                <p class="text-xs text-slate-400 dark:text-navy-300">Trading as: {{ $rootCompany->trading_name }}</p>
+                            @endif
                         </div>
-                        <div class="mt-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                @if($rootCompany->email)
-                                    <div>
-                                        <p class="text-xs+ text-slate-400 dark:text-navy-300">Email</p>
-                                        <p class="text-sm font-medium text-slate-700 dark:text-navy-100">{{ $rootCompany->email }}</p>
-                                    </div>
-                                @endif
-                                @if($rootCompany->phone)
-                                    <div>
-                                        <p class="text-xs+ text-slate-400 dark:text-navy-300">Phone</p>
-                                        <p class="text-sm font-medium text-slate-700 dark:text-navy-100">{{ $rootCompany->phone }}</p>
-                                    </div>
-                                @endif
-                            </div>
-                            <div class="mt-4 flex justify-end">
-                                <a href="{{ route('companies.show', $rootCompany) }}"
-                                   class="btn bg-primary/10 text-primary hover:bg-primary/20">
-                                    View Details
-                                </a>
-                            </div>
+                        <div class="mask is-squircle flex size-12 items-center justify-center bg-primary/10">
+                            <i class="fa fa-building text-primary text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            @if($rootCompany->email)
+                                <div>
+                                    <p class="text-xs+ text-slate-400 dark:text-navy-300">Email</p>
+                                    <p class="text-sm font-medium text-slate-700 dark:text-navy-100">{{ $rootCompany->email }}</p>
+                                </div>
+                            @endif
+                            @if($rootCompany->phone)
+                                <div>
+                                    <p class="text-xs+ text-slate-400 dark:text-navy-300">Phone</p>
+                                    <p class="text-sm font-medium text-slate-700 dark:text-navy-100">{{ $rootCompany->phone }}</p>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <a href="{{ route('companies.show', $rootCompany) }}"
+                               class="btn bg-primary/10 text-primary hover:bg-primary/20">
+                                View Details
+                            </a>
                         </div>
                     </div>
                 </div>
+            </div>
         </div>
         
         <!-- Stats Cards -->
@@ -110,8 +111,8 @@
             @endphp
             
             <div class="card">
-                <div class="flex items-center justify-between px-4 py-4 sm:px-5">
-                    <h2 class="text-lg font-medium tracking-wide text-slate-700 dark:text-navy-100">
+                <div class="flex items-center justify-between py-3 px-4 sm:px-5">
+                    <h2 class="font-medium tracking-wide text-slate-700 dark:text-navy-100">
                         Sub-Clients
                         <span class="ml-2 badge bg-slate-150 text-slate-800 dark:bg-navy-500 dark:text-navy-100">{{ $subClients->count() }}</span>
                     </h2>
@@ -226,8 +227,8 @@
         <!-- Quick Actions -->
         <div class="col-span-12">
             <div class="card">
-                <div class="flex items-center justify-between px-4 py-4 sm:px-5">
-                    <h2 class="text-lg font-medium tracking-wide text-slate-700 dark:text-navy-100">
+                <div class="flex items-center justify-between py-3 px-4 sm:px-5">
+                    <h2 class="font-medium tracking-wide text-slate-700 dark:text-navy-100">
                         Quick Actions
                     </h2>
                 </div>

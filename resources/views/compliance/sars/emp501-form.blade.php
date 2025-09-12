@@ -1,8 +1,10 @@
 @extends('layouts.app')
 
+@extends('layouts.app')
+
 @section('content')
-    <div class="container px-4 sm:px-5">
-        <div class="py-4 lg:py-6">
+    <div class="mt-4 grid grid-cols-12 gap-4 px-[var(--margin-x)] transition-all duration-[.25s] sm:mt-5 sm:gap-5 lg:mt-6 lg:gap-6">
+        <div class="col-span-12">
             <!-- Page Header -->
             <div class="flex items-center justify-between">
                 <div>
@@ -19,6 +21,69 @@
                         <i class="fa fa-arrow-left mr-2"></i>
                         Back to Dashboard
                     </a>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <!-- Current Tax Year -->
+                <div class="card">
+                    <div class="p-4">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-lg font-semibold text-slate-700 dark:text-navy-100">{{ now()->month >= 3 ? now()->year : now()->year - 1 }}/{{ now()->month >= 3 ? now()->year + 1 : now()->year }}</p>
+                                <p class="text-xs+ text-slate-400 dark:text-navy-300">Current Tax Year</p>
+                            </div>
+                            <div class="mask is-squircle flex size-10 items-center justify-center bg-success/10">
+                                <i class="fa fa-calendar-alt text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Due Date -->
+                <div class="card">
+                    <div class="p-4">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-lg font-semibold text-slate-700 dark:text-navy-100">May 31</p>
+                                <p class="text-xs+ text-slate-400 dark:text-navy-300">Submission Due</p>
+                            </div>
+                            <div class="mask is-squircle flex size-10 items-center justify-center bg-warning/10">
+                                <i class="fa fa-exclamation-triangle text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Type -->
+                <div class="card">
+                    <div class="p-4">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-lg font-semibold text-slate-700 dark:text-navy-100">Annual</p>
+                                <p class="text-xs+ text-slate-400 dark:text-navy-300">Reconciliation</p>
+                            </div>
+                            <div class="mask is-squircle flex size-10 items-center justify-center bg-info/10">
+                                <i class="fa fa-chart-bar text-info"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Output Format -->
+                <div class="card">
+                    <div class="p-4">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-lg font-semibold text-slate-700 dark:text-navy-100">Excel</p>
+                                <p class="text-xs+ text-slate-400 dark:text-navy-300">Export Format</p>
+                            </div>
+                            <div class="mask is-squircle flex size-10 items-center justify-center bg-primary/10">
+                                <i class="fa fa-file-excel text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -75,7 +140,7 @@
                             </div>
 
                             <!-- Information Box -->
-                            <div class="rounded-lg bg-success/10 p-4">
+                            <div class="rounded-lg bg-gradient-to-r from-success/5 to-success/10 border border-success/20 p-4">
                                 <div class="flex items-start space-x-3">
                                     <div class="flex size-8 items-center justify-center rounded-full bg-success text-white">
                                         <i class="fa fa-info text-xs"></i>
@@ -90,10 +155,22 @@
                                             February).
                                         </p>
                                         <ul class="mt-2 text-xs text-slate-500 dark:text-navy-300 space-y-1">
-                                            <li>• Covers full tax year from March to February</li>
-                                            <li>• Includes individual employee summaries</li>
-                                            <li>• Generates properly formatted Excel (.xlsx) file</li>
-                                            <li>• Required for annual tax compliance</li>
+                                            <li class="flex items-center space-x-2">
+                                                <i class="fa fa-check text-success text-xs"></i>
+                                                <span>Covers full tax year from March to February</span>
+                                            </li>
+                                            <li class="flex items-center space-x-2">
+                                                <i class="fa fa-check text-success text-xs"></i>
+                                                <span>Includes individual employee summaries</span>
+                                            </li>
+                                            <li class="flex items-center space-x-2">
+                                                <i class="fa fa-check text-success text-xs"></i>
+                                                <span>Generates properly formatted Excel (.xlsx) file</span>
+                                            </li>
+                                            <li class="flex items-center space-x-2">
+                                                <i class="fa fa-check text-success text-xs"></i>
+                                                <span>Required for annual tax compliance</span>
+                                            </li>
                                         </ul>
                                     </div>
                                 </div>
@@ -116,37 +193,53 @@
                 </div>
             </div>
 
-            <!-- Tax Year Information -->
-            <div class="mt-6">
+            <!-- Tax Year Summary Cards -->
+            <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div class="card">
-                    <div class="flex items-center justify-between px-4 py-4 sm:px-5">
-                        <h2 class="text-lg font-medium tracking-wide text-slate-700 dark:text-navy-100">
-                            Tax Year Information
-                        </h2>
-                        <span class="badge bg-info text-white">
-                            {{ now()->month >= 3 ? now()->year : now()->year - 1 }}/{{ now()->month >= 3 ? now()->year + 1 : now()->year }}
-                        </span>
-                    </div>
-                    <div class="px-4 pb-4 sm:px-5">
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div class="rounded-lg bg-slate-100 p-4 dark:bg-navy-600">
-                                <h3 class="font-medium text-slate-700 dark:text-navy-100">Current Tax Year</h3>
-                                <p class="text-sm text-slate-500 dark:text-navy-300 mt-1">
+                    <div class="px-4 py-4">
+                        <h3 class="text-lg font-medium text-slate-700 dark:text-navy-100 mb-4">Current Tax Year</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-500 dark:text-navy-300">Period</span>
+                                <span class="font-medium text-slate-700 dark:text-navy-100">
                                     {{ now()->month >= 3 ? now()->year : now()->year - 1 }}/{{ now()->month >= 3 ? now()->year + 1 : now()->year }}
-                                </p>
-                                <p class="text-xs text-slate-400 dark:text-navy-300 mt-1">
-                                    March {{ now()->month >= 3 ? now()->year : now()->year - 1 }} to February
-                                    {{ now()->month >= 3 ? now()->year + 1 : now()->year }}
-                                </p>
+                                </span>
                             </div>
-                            <div class="rounded-lg bg-slate-100 p-4 dark:bg-navy-600">
-                                <h3 class="font-medium text-slate-700 dark:text-navy-100">Submission Deadline</h3>
-                                <p class="text-sm text-slate-500 dark:text-navy-300 mt-1">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-500 dark:text-navy-300">Start Date</span>
+                                <span class="font-medium text-slate-700 dark:text-navy-100">
+                                    March {{ now()->month >= 3 ? now()->year : now()->year - 1 }}
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-500 dark:text-navy-300">End Date</span>
+                                <span class="font-medium text-slate-700 dark:text-navy-100">
+                                    February {{ now()->month >= 3 ? now()->year + 1 : now()->year }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="px-4 py-4">
+                        <h3 class="text-lg font-medium text-slate-700 dark:text-navy-100 mb-4">Submission Details</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-500 dark:text-navy-300">Due Date</span>
+                                <span class="font-medium text-warning">
                                     {{ now()->month >= 3 ? now()->year + 1 : now()->year }}-05-31
-                                </p>
-                                <p class="text-xs text-slate-400 dark:text-navy-300 mt-1">
-                                    Must be submitted by May 31st
-                                </p>
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-500 dark:text-navy-300">Format</span>
+                                <span class="font-medium text-slate-700 dark:text-navy-100">Excel (.xlsx)</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-500 dark:text-navy-300">Status</span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-info/10 text-info">
+                                    Ready to Generate
+                                </span>
                             </div>
                         </div>
                     </div>

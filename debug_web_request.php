@@ -90,3 +90,4 @@ if ($payslips->count() > 0) {
     echo "Total payslips in database: " . Payslip::count() . "\n";
 }
 
+

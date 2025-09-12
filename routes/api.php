@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AttendanceApiController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClientController;
+use App\Http\Controllers\Api\LeaveApiController;
 
 // Public authentication routes
 Route::prefix('auth')->group(function () {
@@ -49,6 +50,24 @@ Route::middleware('auth:sanctum')->group(function () {
     // Attendance data
     Route::get('/attendance/summary', [AttendanceApiController::class, 'getAttendanceSummary']);
     Route::get('/attendance/user/{user_id}', [AttendanceApiController::class, 'getUserAttendance']);
+});
+
+// Leave Management API Routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Leave balance and types
+    Route::get('/leave/balance', [LeaveApiController::class, 'getBalance']);
+    Route::get('/leave/types', [LeaveApiController::class, 'getLeaveTypes']);
+    Route::get('/leave/programs', [LeaveApiController::class, 'getUserPrograms']);
+
+    // Leave requests
+    Route::get('/leave/requests', [LeaveApiController::class, 'getRequests']);
+    Route::post('/leave/requests', [LeaveApiController::class, 'submitRequest']);
+    Route::get('/leave/requests/{leaveRequest}', [LeaveApiController::class, 'getRequest']);
+    Route::patch('/leave/requests/{leaveRequest}/cancel', [LeaveApiController::class, 'cancelRequest']);
+
+    // Leave history and accruals
+    Route::get('/leave/accrual-history', [LeaveApiController::class, 'getAccrualHistory']);
+    Route::get('/leave/carry-over-summary', [LeaveApiController::class, 'getCarryOverSummary']);
 });
 
 Route::get('/clients', [ClientController::class, 'index']);

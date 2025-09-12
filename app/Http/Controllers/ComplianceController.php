@@ -101,7 +101,7 @@ class ComplianceController extends Controller
         // Get payslip data for the period
         $payslips = Payslip::where('company_id', $company->id)
             ->whereBetween('pay_date', [$startDate, $endDate])
-            ->where('is_final', true)
+            ->whereIn('status', ['paid', 'processed'])
             ->get();
 
         // Calculate EMP201 totals
@@ -161,7 +161,7 @@ class ComplianceController extends Controller
         // Get all payslips for the tax year
         $payslips = Payslip::where('company_id', $company->id)
             ->whereBetween('pay_date', [$startDate, $endDate])
-            ->where('is_final', true)
+            ->whereIn('status', ['paid', 'processed'])
             ->with('user')
             ->get();
 
@@ -247,7 +247,7 @@ class ComplianceController extends Controller
 
         $query = Payslip::where('company_id', $company->id)
             ->whereBetween('pay_date', [$startDate, $endDate])
-            ->where('is_final', true)
+            ->whereIn('status', ['paid', 'processed'])
             ->with('user');
 
         if (!empty($validated['user_ids'])) {
@@ -329,7 +329,7 @@ class ComplianceController extends Controller
 
         $payslips = Payslip::where('company_id', $company->id)
             ->whereBetween('pay_date', [$startDate, $endDate])
-            ->where('is_final', true)
+            ->whereIn('status', ['paid', 'processed'])
             ->get();
 
         $uifData = [
@@ -683,7 +683,14 @@ class ComplianceController extends Controller
 
         $query = Payslip::where('company_id', $company->id)
             ->whereBetween('pay_date', [$startDate, $endDate])
-            ->where('is_final', true)
+            ->whereIn('status', ['paid', 'processed'])
+            ->whereHas('user', function($q) {
+                $q->where('is_employee', true)
+                  ->where('employment_status', 'active')
+                  ->whereNotNull('employee_number')
+                  ->where('employee_number', 'NOT LIKE', 'NAT%') // Exclude admin users like NAT001
+                  ->where('employee_number', 'LIKE', 'CHR%'); // Include only CHR employees
+            })
             ->with('user');
 
         if (!empty($validated['user_ids'])) {
@@ -807,7 +814,7 @@ class ComplianceController extends Controller
         $record .= '2031,' . $taxYear . '09,'; // Assuming September for annual submission
 
         // 2082 - Company registration number
-        $record .= '2082,' . $this->escapeCsvField($company->registration_number ?? '') . ',';
+        $record .= '2082,' . $this->escapeCsvField($company->company_registration_number ?? '') . ',';
 
         // 2037 - Company type indicator
         $record .= '2037,N,'; // N for normal company
@@ -816,19 +823,19 @@ class ComplianceController extends Controller
         $record .= '2027,"' . $this->escapeCsvField($company->email ?? '') . '",';
 
         // 2063 - Address line 1
-        $record .= '2063,"' . $this->escapeCsvField($company->address_line1 ?? '') . '",';
+        $record .= '2063,"' . $this->escapeCsvField($company->physical_address_line1 ?? '') . '",';
 
         // 2064 - Address line 2
-        $record .= '2064,"' . $this->escapeCsvField($company->address_line2 ?? '') . '",';
+        $record .= '2064,"' . $this->escapeCsvField($company->physical_address_line2 ?? '') . '",';
 
         // 2065 - Suburb
-        $record .= '2065,"' . $this->escapeCsvField($company->suburb ?? '') . '",';
+        $record .= '2065,"' . $this->escapeCsvField($company->physical_suburb ?? '') . '",';
 
         // 2066 - City
-        $record .= '2066,"' . $this->escapeCsvField($company->city ?? '') . '",';
+        $record .= '2066,"' . $this->escapeCsvField($company->physical_city ?? '') . '",';
 
         // 2080 - Postal code
-        $record .= '2080,' . $this->escapeCsvField($company->postal_code ?? '') . ',';
+        $record .= '2080,' . $this->escapeCsvField($company->physical_postal_code ?? '') . ',';
 
         // 2081 - Country code
         $record .= '2081,"ZA",';

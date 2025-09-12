@@ -1,203 +1,180 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $host->name }}</h1>
-                <p class="text-gray-600 dark:text-gray-400 mt-1">Host Location Details</p>
-            </div>
-            <div class="flex space-x-3">
-                <a href="{{ route('hosts.edit', $host) }}"
-                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                    Edit Host
-                </a>
-                <form action="{{ route('hosts.generateQRCode', $host) }}" method="POST" class="inline">
-                    @csrf
-                    <button type="submit"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                        Regenerate QR
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Host Status Alert -->
-        @if(!$host->is_active)
-            <div class="mb-6 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                clip-rule="evenodd" />
-                        </svg>
+    <div class="mt-4 grid grid-cols-12 gap-4 px-[var(--margin-x)] transition-all duration-[.25s] sm:mt-5 sm:gap-5 lg:mt-6 lg:gap-6">
+        <div class="col-span-12">
+            <!-- Page Header -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <a href="{{ route('hosts.index') }}" class="text-slate-400 hover:text-slate-600 dark:text-navy-300 dark:hover:text-navy-100">
+                            <i class="fa fa-arrow-left"></i>
+                        </a>
+                        <h2 class="text-xl font-medium text-slate-800 dark:text-navy-50 lg:text-2xl">
+                            {{ $host->name }}
+                        </h2>
+                        <span class="badge {{ $host->is_active ? 'bg-success text-white' : 'bg-error text-white' }}">
+                            {{ $host->is_active ? 'Active' : 'Inactive' }}
+                        </span>
                     </div>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Host Location Inactive</h3>
-                        <p class="mt-1 text-sm text-red-700 dark:text-red-300">This host location is currently inactive and
-                            cannot be used for check-ins.</p>
+                    <p class="mt-0.5 text-slate-500 dark:text-navy-200">
+                        Host location for {{ $host->program->title ?? 'No Program' }}
+                    </p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="{{ route('hosts.edit', $host) }}"
+                       class="btn bg-warning font-medium text-white hover:bg-warning-focus">
+                        <i class="fa fa-edit mr-2"></i>Edit
+                    </a>
+                    <form action="{{ route('hosts.generateQRCode', $host) }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="btn bg-info font-medium text-white hover:bg-info-focus">
+                            <i class="fa fa-sync-alt mr-2"></i>Regenerate QR
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Analytics Cards -->
+            <div class="mt-6 grid grid-cols-12 gap-4 sm:gap-5 lg:gap-6">
+                <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+                    <div class="card">
+                        <div class="p-4 sm:p-5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-2xl font-semibold text-slate-700 dark:text-navy-100">{{ $analytics['total_check_ins'] }}</p>
+                                    <p class="text-xs+ text-slate-400 dark:text-navy-300">Total Check-ins</p>
+                                </div>
+                                <div class="mask is-squircle flex size-10 items-center justify-center bg-info/10">
+                                    <i class="fa fa-users text-info text-lg"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+                    <div class="card">
+                        <div class="p-4 sm:p-5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-2xl font-semibold text-slate-700 dark:text-navy-100">{{ $analytics['check_ins_today'] }}</p>
+                                    <p class="text-xs+ text-slate-400 dark:text-navy-300">Today</p>
+                                </div>
+                                <div class="mask is-squircle flex size-10 items-center justify-center bg-success/10">
+                                    <i class="fa fa-calendar-day text-success text-lg"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+                    <div class="card">
+                        <div class="p-4 sm:p-5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-2xl font-semibold text-slate-700 dark:text-navy-100">{{ $analytics['check_ins_this_week'] }}</p>
+                                    <p class="text-xs+ text-slate-400 dark:text-navy-300">This Week</p>
+                                </div>
+                                <div class="mask is-squircle flex size-10 items-center justify-center bg-warning/10">
+                                    <i class="fa fa-calendar-week text-warning text-lg"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+                    <div class="card">
+                        <div class="p-4 sm:p-5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-2xl font-semibold text-slate-700 dark:text-navy-100">{{ $analytics['unique_users'] }}</p>
+                                    <p class="text-xs+ text-slate-400 dark:text-navy-300">Unique Users</p>
+                                </div>
+                                <div class="mask is-squircle flex size-10 items-center justify-center bg-primary/10">
+                                    <i class="fa fa-user-friends text-primary text-lg"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        @endif
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Left Column - Host Details -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Host Information Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Host Information</h3>
-                    </div>
-                    <div class="p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Basic Info -->
-                            <div>
-                                <h4
-                                    class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                                    Basic Information</h4>
-                                <dl class="space-y-3">
+            <!-- Main Content -->
+            <div class="mt-6 grid grid-cols-12 gap-4 sm:gap-5 lg:gap-6">
+                <!-- Host Information -->
+                <div class="col-span-12 lg:col-span-8">
+                    <div class="card">
+                        <div class="px-4 py-4 sm:px-5">
+                            <h2 class="text-lg font-medium tracking-wide text-slate-700 dark:text-navy-100">Host Information</h2>
+                        </div>
+                        <div class="px-4 pb-4 sm:px-5">
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div class="space-y-4">
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-900 dark:text-white">Name</dt>
-                                        <dd class="text-sm text-gray-600 dark:text-gray-300">{{ $host->name }}</dd>
+                                        <p class="text-xs+ text-slate-400 dark:text-navy-300">Host Code</p>
+                                        <p class="text-sm font-medium text-slate-700 dark:text-navy-100 font-mono">{{ $host->code }}</p>
                                     </div>
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-900 dark:text-white">Code</dt>
-                                        <dd class="text-sm text-gray-600 dark:text-gray-300 font-mono">{{ $host->code }}
-                                        </dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-900 dark:text-white">Program</dt>
-                                        <dd class="text-sm text-gray-600 dark:text-gray-300">
-                                            <a href="{{ route('programs.show', $host->program) }}"
-                                                class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200">
-                                                {{ $host->program->title ?? 'No Program' }}
-                                            </a>
-                                        </dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-900 dark:text-white">Status</dt>
-                                        <dd>
-                                            <span
-                                                class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $host->is_active ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100' }}">
-                                                {{ $host->is_active ? 'Active' : 'Inactive' }}
-                                            </span>
-                                        </dd>
+                                        <p class="text-xs+ text-slate-400 dark:text-navy-300">Program</p>
+                                        <p class="text-sm font-medium text-slate-700 dark:text-navy-100">
+                                            @if($host->program)
+                                                <a href="{{ route('programs.show', $host->program) }}" class="text-primary hover:text-primary-focus">
+                                                    {{ $host->program->title }}
+                                                </a>
+                                            @else
+                                                No Program Assigned
+                                            @endif
+                                        </p>
                                     </div>
                                     @if($host->description)
-                                        <div>
-                                            <dt class="text-sm font-medium text-gray-900 dark:text-white">Description</dt>
-                                            <dd class="text-sm text-gray-600 dark:text-gray-300">{{ $host->description }}</dd>
-                                        </div>
+                                    <div>
+                                        <p class="text-xs+ text-slate-400 dark:text-navy-300">Description</p>
+                                        <p class="text-sm font-medium text-slate-700 dark:text-navy-100">{{ $host->description }}</p>
+                                    </div>
                                     @endif
-                                </dl>
-                            </div>
-
-                            <!-- Location Info -->
-                            <div>
-                                <h4
-                                    class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                                    Location Details</h4>
-                                <dl class="space-y-3">
+                                </div>
+                                <div class="space-y-4">
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-900 dark:text-white">Address</dt>
-                                        <dd class="text-sm text-gray-600 dark:text-gray-300">
-                                            {{ $host->getFullAddressAttribute() }}</dd>
+                                        <p class="text-xs+ text-slate-400 dark:text-navy-300">Address</p>
+                                        <p class="text-sm font-medium text-slate-700 dark:text-navy-100">{{ $host->full_address }}</p>
                                     </div>
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-900 dark:text-white">GPS Coordinates</dt>
-                                        <dd class="text-sm text-gray-600 dark:text-gray-300 font-mono">
-                                            {{ $host->latitude }}, {{ $host->longitude }}</dd>
+                                        <p class="text-xs+ text-slate-400 dark:text-navy-300">GPS & Radius</p>
+                                        <p class="text-sm font-medium text-slate-700 dark:text-navy-100 font-mono">{{ $host->latitude }}, {{ $host->longitude }}</p>
+                                        <p class="text-sm text-slate-600 dark:text-navy-200">{{ $host->radius_meters }}m radius</p>
                                     </div>
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-900 dark:text-white">Check-in Radius</dt>
-                                        <dd class="text-sm text-gray-600 dark:text-gray-300">{{ $host->radius_meters }}
-                                            meters</dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-900 dark:text-white">GPS Validation</dt>
-                                        <dd>
-                                            <span
-                                                class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $host->requires_gps_validation ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100' }}">
-                                                {{ $host->requires_gps_validation ? 'Required' : 'Optional' }}
-                                            </span>
-                                        </dd>
-                                    </div>
-                                </dl>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Check-in/out Settings -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Check-in/out Settings</h3>
-                    </div>
-                    <div class="p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Check-in Settings -->
-                            <div>
-                                <h4
-                                    class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                                    Check-in</h4>
-                                <dl class="space-y-3">
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-900 dark:text-white">Time Validation</dt>
-                                        <dd>
-                                            <span
-                                                class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $host->requires_time_validation ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100' }}">
-                                                {{ $host->requires_time_validation ? 'Required' : 'Optional' }}
-                                            </span>
-                                        </dd>
-                                    </div>
-                                    @if($host->check_in_start_time)
-                                        <div>
-                                            <dt class="text-sm font-medium text-gray-900 dark:text-white">Allowed Hours</dt>
-                                            <dd class="text-sm text-gray-600 dark:text-gray-300 font-mono">
-                                                {{ $host->check_in_start_time ? \Carbon\Carbon::parse($host->check_in_start_time)->format('H:i') : 'Any time' }}
-                                                -
-                                                {{ $host->check_in_end_time ? \Carbon\Carbon::parse($host->check_in_end_time)->format('H:i') : 'Any time' }}
-                                            </dd>
-                                        </div>
-                                    @endif
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-900 dark:text-white">Daily Limit</dt>
-                                        <dd class="text-sm text-gray-600 dark:text-gray-300">
-                                            {{ $host->max_daily_check_ins }} check-ins per day</dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-900 dark:text-white">Multiple Check-ins
-                                        </dt>
-                                        <dd>
-                                            <span
-                                                class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $host->allow_multiple_check_ins ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100' }}">
-                                                {{ $host->allow_multiple_check_ins ? 'Allowed' : 'Not Allowed' }}
-                                            </span>
-                                        </dd>
-                                    </div>
-                                </dl>
+                <!-- QR Code & Activity -->
+                <div class="col-span-12 lg:col-span-4">
+                    <div class="card">
+                        <div class="px-4 py-4 sm:px-5">
+                            <h2 class="text-lg font-medium tracking-wide text-slate-700 dark:text-navy-100">QR Code</h2>
+                        </div>
+                        <div class="px-4 pb-4 sm:px-5">
+                            <div class="text-center">
+                                <div class="mx-auto mb-4 flex h-32 w-32 items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-600">
+                                    <i class="fa fa-qrcode text-4xl text-slate-400 dark:text-navy-300"></i>
+                                </div>
+                                <p class="text-xs font-mono text-slate-600 dark:text-navy-200 mb-2">{{ $host->qr_code }}</p>
+                                <form action="{{ route('hosts.generateQRCode', $host) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn w-full bg-info/10 text-info hover:bg-info/20">
+                                        <i class="fa fa-sync-alt mr-1"></i>Regenerate
+                                    </button>
+                                </form>
                             </div>
-
-                            <!-- Check-out Settings -->
-                            <div>
-                                <h4
-                                    class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                                    Check-out</h4>
-                                <dl class="space-y-3">
-                                    @if($host->check_out_start_time)
-                                        <div>
-                                            <dt class="text-sm font-medium text-gray-900 dark:text-white">Allowed Hours</dt>
-                                            <dd class="text-sm text-gray-600 dark:text-gray-300 font-mono">
-                                                {{ $host->check_out_start_time ? \Carbon\Carbon::parse($host->check_out_start_time)->format('H:i') : 'Any time' }}
-                                                -
-                                                {{ $host->check_out_end_time ? \Carbon\Carbon::parse($host->check_out_end_time)->format('H:i') : 'Any time' }}
-                                            </dd>
-                                        </div>
-                                    @endif
-                                    <div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
                                         <dt class="text-sm font-medium text-gray-900 dark:text-white">Supervisor Approval
                                         </dt>
                                         <dd>

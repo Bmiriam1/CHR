@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container px-4 sm:px-5">
-        <div class="py-4 lg:py-6">
+    <div class="mt-4 grid grid-cols-12 gap-4 px-[var(--margin-x)] transition-all duration-[.25s] sm:mt-5 sm:gap-5 lg:mt-6 lg:gap-6">
+        <div class="col-span-12">
             <!-- Page Header -->
             <div class="flex items-center justify-between">
                 <div>
@@ -22,8 +22,11 @@
                 </div>
             </div>
 
-            <!-- Certificate Types -->
-            <div class="mt-6 grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
+        </div>
+
+        <!-- Certificate Types -->
+        <div class="col-span-12 lg:col-span-8">
+            <div class="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
                 <!-- IRP5 Certificates -->
                 <div class="card">
                     <div class="flex items-center justify-between px-4 py-4 sm:px-5">
@@ -175,9 +178,11 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Certificate Information -->
-            <div class="mt-6">
+        <!-- Certificate Information -->
+        <div class="col-span-12 lg:col-span-4">
+            <div class="grid grid-cols-1 gap-4 sm:gap-5">
                 <div class="card">
                     <div class="flex items-center justify-between px-4 py-4 sm:px-5">
                         <h2 class="text-lg font-medium tracking-wide text-slate-700 dark:text-navy-100">
@@ -188,42 +193,40 @@
                             {{ now()->month >= 3 ? now()->year : now()->year - 1 }}/{{ now()->month >= 3 ? now()->year + 1 : now()->year }}
                         </span>
                     </div>
-                    <div class="px-4 pb-4 sm:px-5">
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                            <div class="rounded-lg bg-warning/10 p-4">
-                                <h3 class="font-medium text-slate-700 dark:text-navy-100">IRP5 Certificates</h3>
-                                <p class="text-sm text-slate-500 dark:text-navy-300 mt-1">
-                                    Required for all employees earning above the tax threshold
-                                </p>
-                                <ul class="text-xs text-slate-400 dark:text-navy-300 mt-2 space-y-1">
-                                    <li>• Shows PAYE deductions</li>
-                                    <li>• Includes UIF contributions</li>
-                                    <li>• CSV format for SARS e@syfile</li>
-                                    <li>• PDF format for employees</li>
-                                </ul>
-                            </div>
-                            <div class="rounded-lg bg-info/10 p-4">
-                                <h3 class="font-medium text-slate-700 dark:text-navy-100">IT3(a) Certificates</h3>
-                                <p class="text-sm text-slate-500 dark:text-navy-300 mt-1">
-                                    Required for interest earned above R23,800
-                                </p>
-                                <ul class="text-xs text-slate-400 dark:text-navy-300 mt-2 space-y-1">
-                                    <li>• Shows interest earned</li>
-                                    <li>• Required for tax returns</li>
-                                    <li>• SARS reporting requirement</li>
-                                </ul>
-                            </div>
-                            <div class="rounded-lg bg-success/10 p-4">
-                                <h3 class="font-medium text-slate-700 dark:text-navy-100">Submission Deadline</h3>
-                                <p class="text-sm text-slate-500 dark:text-navy-300 mt-1">
-                                    Certificates must be issued by May 31st
-                                </p>
-                                <ul class="text-xs text-slate-400 dark:text-navy-300 mt-2 space-y-1">
-                                    <li>• Electronic submission to SARS</li>
-                                    <li>• PDF format for employees</li>
-                                    <li>• Keep copies for 5 years</li>
-                                </ul>
-                            </div>
+                    <div class="px-4 pb-4 sm:px-5 space-y-4">
+                        <div class="rounded-lg bg-warning/10 p-4">
+                            <h3 class="font-medium text-slate-700 dark:text-navy-100">IRP5 Certificates</h3>
+                            <p class="text-sm text-slate-500 dark:text-navy-300 mt-1">
+                                Required for all employees earning above the tax threshold
+                            </p>
+                            <ul class="text-xs text-slate-400 dark:text-navy-300 mt-2 space-y-1">
+                                <li>• Shows PAYE deductions</li>
+                                <li>• Includes UIF contributions</li>
+                                <li>• CSV format for SARS e@syfile</li>
+                                <li>• PDF format for employees</li>
+                            </ul>
+                        </div>
+                        <div class="rounded-lg bg-info/10 p-4">
+                            <h3 class="font-medium text-slate-700 dark:text-navy-100">IT3(a) Certificates</h3>
+                            <p class="text-sm text-slate-500 dark:text-navy-300 mt-1">
+                                Required for interest earned above R23,800
+                            </p>
+                            <ul class="text-xs text-slate-400 dark:text-navy-300 mt-2 space-y-1">
+                                <li>• Shows interest earned</li>
+                                <li>• Required for tax returns</li>
+                                <li>• SARS reporting requirement</li>
+                            </ul>
+                        </div>
+                        <div class="rounded-lg bg-success/10 p-4">
+                            <h3 class="font-medium text-slate-700 dark:text-navy-100">Submission Deadline</h3>
+                            <p class="text-sm text-slate-500 dark:text-navy-300 mt-1">
+                                Certificates must be issued by May 31st
+                            </p>
+                            <ul class="text-xs text-slate-400 dark:text-navy-300 mt-2 space-y-1">
+                                <li>• Electronic submission to SARS</li>
+                                <li>• PDF format for employees</li>
+                                <li>• Keep copies for 5 years</li>
+                            </ul>
                         </div>
                     </div>
                 </div>

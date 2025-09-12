@@ -6,6 +6,7 @@ use App\Traits\HasTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -203,6 +204,14 @@ class Program extends Model
     }
 
     /**
+     * Get all users enrolled in this program (many-to-many relationship).
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'program_learners');
+    }
+
+    /**
      * Get all schedules for this program.
      */
     public function schedules(): HasMany
@@ -240,6 +249,22 @@ class Program extends Model
     public function leaveRequests(): HasMany
     {
         return $this->hasMany(LeaveRequest::class);
+    }
+
+    /**
+     * Get the budgets for this program.
+     */
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(ProgramBudget::class);
+    }
+
+    /**
+     * Get the active budget for this program.
+     */
+    public function activeBudget(): HasMany
+    {
+        return $this->hasMany(ProgramBudget::class)->where('is_active', true);
     }
 
     /**

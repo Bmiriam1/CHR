@@ -146,7 +146,7 @@
                                     <label for="phone" class="block text-xs+ font-medium text-slate-700 dark:text-navy-100 mb-1">
                                         Phone Number
                                     </label>
-                                    <input type="tel" 
+                                    <input type="text" 
                                            name="phone" 
                                            id="phone" 
                                            value="{{ old('phone') }}"

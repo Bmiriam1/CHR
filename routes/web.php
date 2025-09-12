@@ -41,10 +41,10 @@ Route::get('/', function () {
         if ($user->hasRole('learner')) {
             return view('learner.dashboard');
         } elseif ($user->hasRole(['admin', 'hr_manager', 'company_admin'])) {
-            return view('pages.dashboards.index');
+            return app(\App\Http\Controllers\DashboardController::class)->index();
         }
 
-        return view('pages.dashboards.index');
+        return app(\App\Http\Controllers\DashboardController::class)->index();
     }
 
     // Redirect to login if not authenticated
@@ -59,10 +59,10 @@ Route::get('/dashboard', function () {
     if ($user->hasRole('learner')) {
         return view('learner.dashboard');
     } elseif ($user->hasRole(['admin', 'hr_manager', 'company_admin'])) {
-        return view('pages.dashboards.index');
+        return app(\App\Http\Controllers\DashboardController::class)->index();
     }
 
-    return view('pages.dashboards.index');
+    return app(\App\Http\Controllers\DashboardController::class)->index();
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {

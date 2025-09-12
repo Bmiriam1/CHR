@@ -56,3 +56,4 @@ for ($i = 0; $i < min(3, count($lines)); $i++) {
     echo ($i + 1) . ": " . substr($lines[$i], 0, 100) . "...\n";
 }
 
+

@@ -16,41 +16,90 @@ class LeaveBalance extends Model
         'program_id',
         'company_id',
         'leave_year',
-        'sick_leave_entitled',
-        'sick_leave_taken',
-        'sick_leave_balance',
-        'personal_leave_entitled',
-        'personal_leave_taken',
-        'personal_leave_balance',
-        'emergency_leave_entitled',
-        'emergency_leave_taken',
-        'emergency_leave_balance',
-        'other_leave_entitled',
-        'other_leave_taken',
-        'other_leave_balance',
-        'total_entitled',
-        'total_taken',
-        'total_balance',
+
+        // Annual Leave
+        'annual_leave_entitled',
+        'annual_leave_taken',
+        'annual_leave_balance',
+        'annual_leave_carried_over',
+
+        // Sick Leave
+        'sick_leave_cycle_entitled',
+        'sick_leave_cycle_taken',
+        'sick_leave_cycle_balance',
+        'sick_leave_cycle_start',
+        'sick_leave_cycle_end',
+
+        // Maternity Leave
+        'maternity_leave_entitled',
+        'maternity_leave_taken',
+        'maternity_leave_balance',
+
+        // Paternity Leave
+        'paternity_leave_entitled',
+        'paternity_leave_taken',
+        'paternity_leave_balance',
+
+        // Family Responsibility Leave
+        'family_responsibility_leave_entitled',
+        'family_responsibility_leave_taken',
+        'family_responsibility_leave_balance',
+
+        // Study Leave
+        'study_leave_entitled',
+        'study_leave_taken',
+        'study_leave_balance',
+
+        // Service Information
+        'leave_year_start',
+        'leave_year_end',
+        'employment_start_date',
+        'is_probationary',
+        'probation_end_date',
         'accrual_rate_per_month',
         'is_active',
     ];
 
     protected $casts = [
-        'sick_leave_entitled' => 'decimal:2',
-        'sick_leave_taken' => 'decimal:2',
-        'sick_leave_balance' => 'decimal:2',
-        'personal_leave_entitled' => 'decimal:2',
-        'personal_leave_taken' => 'decimal:2',
-        'personal_leave_balance' => 'decimal:2',
-        'emergency_leave_entitled' => 'decimal:2',
-        'emergency_leave_taken' => 'decimal:2',
-        'emergency_leave_balance' => 'decimal:2',
-        'other_leave_entitled' => 'decimal:2',
-        'other_leave_taken' => 'decimal:2',
-        'other_leave_balance' => 'decimal:2',
-        'total_entitled' => 'decimal:2',
-        'total_taken' => 'decimal:2',
-        'total_balance' => 'decimal:2',
+        // Annual Leave
+        'annual_leave_entitled' => 'decimal:2',
+        'annual_leave_taken' => 'decimal:2',
+        'annual_leave_balance' => 'decimal:2',
+        'annual_leave_carried_over' => 'decimal:2',
+
+        // Sick Leave
+        'sick_leave_cycle_entitled' => 'decimal:2',
+        'sick_leave_cycle_taken' => 'decimal:2',
+        'sick_leave_cycle_balance' => 'decimal:2',
+        'sick_leave_cycle_start' => 'date',
+        'sick_leave_cycle_end' => 'date',
+
+        // Maternity Leave
+        'maternity_leave_entitled' => 'decimal:2',
+        'maternity_leave_taken' => 'decimal:2',
+        'maternity_leave_balance' => 'decimal:2',
+
+        // Paternity Leave
+        'paternity_leave_entitled' => 'decimal:2',
+        'paternity_leave_taken' => 'decimal:2',
+        'paternity_leave_balance' => 'decimal:2',
+
+        // Family Responsibility Leave
+        'family_responsibility_leave_entitled' => 'decimal:2',
+        'family_responsibility_leave_taken' => 'decimal:2',
+        'family_responsibility_leave_balance' => 'decimal:2',
+
+        // Study Leave
+        'study_leave_entitled' => 'decimal:2',
+        'study_leave_taken' => 'decimal:2',
+        'study_leave_balance' => 'decimal:2',
+
+        // Service Information
+        'leave_year_start' => 'date',
+        'leave_year_end' => 'date',
+        'employment_start_date' => 'date',
+        'is_probationary' => 'boolean',
+        'probation_end_date' => 'date',
         'accrual_rate_per_month' => 'decimal:2',
         'is_active' => 'boolean',
     ];

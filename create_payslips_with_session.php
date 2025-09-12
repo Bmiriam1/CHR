@@ -82,3 +82,4 @@ echo "CHR employee payslips: " . Payslip::whereHas('user', function ($q) {
 
 echo "Done!\n";
 
+

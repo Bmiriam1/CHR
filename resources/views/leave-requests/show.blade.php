@@ -1,15 +1,20 @@
 @extends('layouts.app')
 
+@section('title', 'Leave Request Details')
+
 @section('content')
-    <div class="container px-4 sm:px-5">
-        <div class="py-4 lg:py-6">
+    <div
+        class="mt-4 grid grid-cols-12 gap-4 px-[var(--margin-x)] transition-all duration-[.25s] sm:mt-5 sm:gap-5 lg:mt-6 lg:gap-6">
+
+        <!-- Main Content Area -->
+        <div class="col-span-12 lg:col-span-8">
             <!-- Page Header -->
-            <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center justify-between space-x-2 mb-6">
                 <div>
-                    <h2 class="text-xl font-medium text-slate-800 dark:text-navy-50 lg:text-2xl">
+                    <h2 class="text-base font-medium tracking-wide text-slate-800 line-clamp-1 dark:text-navy-100">
                         Leave Application - {{ $user->first_name }} {{ $user->last_name }}
                     </h2>
-                    <p class="mt-0.5 text-slate-500 dark:text-navy-200">
+                    <p class="mt-1 text-xs-plus text-slate-500 dark:text-navy-200">
                         Program: {{ $program->title }} | Year: {{ $leaveBalance->leave_year }}
                     </p>
                 </div>
@@ -19,406 +24,321 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 size-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        View Program
+                    </a>
+                    <a href="{{ route('leave-requests.index') }}"
+                        class="btn bg-slate-150 font-medium text-slate-800 hover:bg-slate-200 focus:bg-slate-200 active:bg-slate-200/80">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 size-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
-                        Back to Program
+                        Back to Leave
                     </a>
+                </div>
+            </div>
+
+            <!-- Leave Request Details -->
+            <div class="card col-span-12">
+                <div class="flex items-center justify-between py-3 px-4">
+                    <h2 class="font-medium tracking-wide text-slate-700 dark:text-navy-100">
+                        Request Details
+                    </h2>
+                    <span class="badge rounded-full {{ $leaveRequest->status_badge_class }}">
+                        {{ ucfirst($leaveRequest->status) }}
+                    </span>
+                </div>
+                <div class="px-4 pb-4 sm:px-5">
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div>
+                            <h3 class="text-sm font-medium text-slate-700 dark:text-navy-100 mb-3">Leave Information</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <p
+                                        class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-navy-400 mb-1">
+                                        Leave Type
+                                    </p>
+                                    <p class="text-slate-700 dark:text-navy-100">{{ $leaveRequest->leaveType->name }}</p>
+                                </div>
+                                <div>
+                                    <p
+                                        class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-navy-400 mb-1">
+                                        Duration
+                                    </p>
+                                    <p class="text-slate-700 dark:text-navy-100">
+                                        {{ $leaveRequest->start_date->format('M j, Y') }} -
+                                        {{ $leaveRequest->end_date->format('M j, Y') }}
+                                        ({{ $leaveRequest->duration }} days)
+                                    </p>
+                                </div>
+                                <div>
+                                    <p
+                                        class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-navy-400 mb-1">
+                                        Reason
+                                    </p>
+                                    <p class="text-slate-700 dark:text-navy-100">{{ $leaveRequest->reason }}</p>
+                                </div>
+                                @if($leaveRequest->notes)
+                                    <div>
+                                        <p
+                                            class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-navy-400 mb-1">
+                                            Notes
+                                        </p>
+                                        <p class="text-slate-700 dark:text-navy-100">{{ $leaveRequest->notes }}</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-slate-700 dark:text-navy-100 mb-3">Request Information</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <p
+                                        class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-navy-400 mb-1">
+                                        Submitted
+                                    </p>
+                                    <p class="text-slate-700 dark:text-navy-100">
+                                        {{ $leaveRequest->submitted_at->format('M j, Y g:i A') }}</p>
+                                </div>
+                                @if($leaveRequest->approved_at)
+                                    <div>
+                                        <p
+                                            class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-navy-400 mb-1">
+                                            {{ $leaveRequest->status === 'approved' ? 'Approved' : 'Processed' }}
+                                        </p>
+                                        <p class="text-slate-700 dark:text-navy-100">
+                                            {{ $leaveRequest->approved_at->format('M j, Y g:i A') }}</p>
+                                        @if($leaveRequest->approvedBy)
+                                            <p class="text-xs text-slate-500 dark:text-navy-200">by
+                                                {{ $leaveRequest->approvedBy->full_name }}</p>
+                                        @endif
+                                    </div>
+                                @endif
+                                @if($leaveRequest->is_emergency)
+                                    <div>
+                                        <span class="badge rounded-full bg-error/10 text-error">
+                                            Emergency Request
+                                        </span>
+                                    </div>
+                                @endif
+                                @if($leaveRequest->requires_medical_certificate)
+                                    <div>
+                                        <span class="badge rounded-full bg-warning/10 text-warning">
+                                            Medical Certificate Required
+                                        </span>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Information -->
+            @if($leaveRequest->is_paid_leave)
+                <div class="card col-span-12 mt-4">
+                    <div class="flex items-center justify-between py-3 px-4">
+                        <h2 class="font-medium tracking-wide text-slate-700 dark:text-navy-100">
+                            Financial Information
+                        </h2>
+                    </div>
+                    <div class="px-4 pb-4 sm:px-5">
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                            <div>
+                                <p class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-navy-400 mb-1">
+                                    Daily Rate
+                                </p>
+                                <p class="text-lg font-semibold text-slate-700 dark:text-navy-100">
+                                    R{{ number_format($leaveRequest->daily_rate_at_time, 2) }}
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-navy-400 mb-1">
+                                    Total Days
+                                </p>
+                                <p class="text-lg font-semibold text-slate-700 dark:text-navy-100">
+                                    {{ $leaveRequest->duration }} days
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-navy-400 mb-1">
+                                    Total Pay
+                                </p>
+                                <p class="text-lg font-semibold text-slate-700 dark:text-navy-100">
+                                    R{{ number_format($leaveRequest->total_leave_pay, 2) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Actions -->
+            @if($leaveRequest->status === 'pending')
+                <div class="card col-span-12 mt-4">
+                    <div class="flex items-center justify-between py-3 px-4">
+                        <h2 class="font-medium tracking-wide text-slate-700 dark:text-navy-100">
+                            Actions
+                        </h2>
+                    </div>
+                    <div class="px-4 pb-4 sm:px-5">
+                        <div class="flex space-x-3">
+                            <form method="POST" action="{{ route('leave-requests.cancel', $leaveRequest) }}" class="inline">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit"
+                                    class="btn bg-error font-medium text-white hover:bg-error-focus focus:bg-error-focus active:bg-error-focus/90"
+                                    onclick="return confirm('Are you sure you want to cancel this leave request?')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 size-4" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Cancel Request
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-span-12 lg:col-span-4">
+            <!-- Leave Balance Summary -->
+            <div class="card w-full space-y-4 rounded-xl p-4 sm:px-5">
+                <div class="flex items-center justify-between space-x-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex size-10 items-center justify-center rounded-lg bg-info/10">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-info" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-slate-700 dark:text-navy-100">
+                                Leave Balance Summary
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-600 dark:text-navy-200">Total Entitled</span>
+                        <span class="font-medium text-slate-700 dark:text-navy-100">{{ $leaveBalance->total_entitled }}
+                            days</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-600 dark:text-navy-200">Total Taken</span>
+                        <span class="font-medium text-slate-700 dark:text-navy-100">{{ $leaveBalance->total_taken }}
+                            days</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-600 dark:text-navy-200">Remaining</span>
+                        <span class="font-medium text-slate-700 dark:text-navy-100">{{ $leaveBalance->total_balance }}
+                            days</span>
+                    </div>
+                    <div class="pt-2 border-t border-slate-200 dark:border-navy-500">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-slate-600 dark:text-navy-200">Utilization</span>
+                            <span
+                                class="text-sm font-medium text-slate-700 dark:text-navy-100">{{ $leaveBalance->getUtilizationPercentage() }}%</span>
+                        </div>
+                        <div class="h-2 rounded-full {{ $leaveBalance->getBalanceStatus() === 'critical' ? 'bg-red-500' : ($leaveBalance->getBalanceStatus() === 'warning' ? 'bg-yellow-500' : ($leaveBalance->getBalanceStatus() === 'moderate' ? 'bg-blue-500' : 'bg-green-500')) }}"
+                            style="width: {{ $leaveBalance->getUtilizationPercentage() }}%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leave Type Breakdown -->
+            <div class="card w-full space-y-4 rounded-xl p-4 sm:px-5 mt-4">
+                <div class="flex items-center justify-between space-x-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-primary" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-slate-700 dark:text-navy-100">
+                                Leave Breakdown
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-600 dark:text-navy-200">Sick Leave</span>
+                        <span class="text-sm font-medium text-slate-700 dark:text-navy-100">
+                            {{ $leaveBalance->sick_leave_taken }}/{{ $leaveBalance->sick_leave_entitled }}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-600 dark:text-navy-200">Personal Leave</span>
+                        <span class="text-sm font-medium text-slate-700 dark:text-navy-100">
+                            {{ $leaveBalance->personal_leave_taken }}/{{ $leaveBalance->personal_leave_entitled }}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-600 dark:text-navy-200">Emergency Leave</span>
+                        <span class="text-sm font-medium text-slate-700 dark:text-navy-100">
+                            {{ $leaveBalance->emergency_leave_taken }}/{{ $leaveBalance->emergency_leave_entitled }}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-600 dark:text-navy-200">Other Leave</span>
+                        <span class="text-sm font-medium text-slate-700 dark:text-navy-100">
+                            {{ $leaveBalance->other_leave_taken }}/{{ $leaveBalance->other_leave_entitled }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card w-full space-y-4 rounded-xl p-4 sm:px-5 mt-4">
+                <div class="flex items-center justify-between space-x-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex size-10 items-center justify-center rounded-lg bg-success/10">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-success" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-slate-700 dark:text-navy-100">
+                                Quick Actions
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-2">
                     <a href="{{ route('leave-requests.create') }}"
-                        class="btn bg-primary font-medium text-white hover:bg-primary-focus focus:bg-primary-focus active:bg-primary-focus/90">
+                        class="btn w-full bg-primary font-medium text-white hover:bg-primary-focus focus:bg-primary-focus active:bg-primary-focus/90">
                         <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 size-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        New Request
+                        New Leave Request
                     </a>
-                </div>
-            </div>
-
-            <!-- Leave Balance Overview -->
-            <div class="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-4 mb-6">
-                <!-- Total Entitled -->
-                <div class="card">
-                    <div class="flex items-center justify-between p-4">
-                        <div>
-                            <p class="text-xs+ text-slate-400 dark:text-navy-300">Total Entitled</p>
-                            <h3 class="text-xl font-semibold text-slate-700 dark:text-navy-100">
-                                {{ $leaveBalance->total_entitled }} days
-                            </h3>
-                            <p class="text-xs text-info">Annual allocation</p>
-                        </div>
-                        <div class="mask is-squircle flex size-10 items-center justify-center bg-info/10">
-                            <i class="fa fa-calendar-check text-info"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Total Taken -->
-                <div class="card">
-                    <div class="flex items-center justify-between p-4">
-                        <div>
-                            <p class="text-xs+ text-slate-400 dark:text-navy-300">Total Taken</p>
-                            <h3 class="text-xl font-semibold text-slate-700 dark:text-navy-100">
-                                {{ $leaveBalance->total_taken }} days
-                            </h3>
-                            <p class="text-xs text-warning">{{ $leaveBalance->getUtilizationPercentage() }}% utilized</p>
-                        </div>
-                        <div class="mask is-squircle flex size-10 items-center justify-center bg-warning/10">
-                            <i class="fa fa-calendar-times text-warning"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Total Balance -->
-                <div class="card">
-                    <div class="flex items-center justify-between p-4">
-                        <div>
-                            <p class="text-xs+ text-slate-400 dark:text-navy-300">Available Balance</p>
-                            <h3 class="text-xl font-semibold text-slate-700 dark:text-navy-100">
-                                {{ $leaveBalance->total_balance }} days
-                            </h3>
-                            <p class="text-xs {{ $leaveBalance->getBalanceStatusColor() }}">
-                                {{ ucfirst($leaveBalance->getBalanceStatus()) }} status
-                            </p>
-                        </div>
-                        <div class="mask is-squircle flex size-10 items-center justify-center bg-success/10">
-                            <i class="fa fa-calendar-plus text-success"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Accrued Leave -->
-                <div class="card">
-                    <div class="flex items-center justify-between p-4">
-                        <div>
-                            <p class="text-xs+ text-slate-400 dark:text-navy-300">Accrued This Year</p>
-                            <h3 class="text-xl font-semibold text-slate-700 dark:text-navy-100">
-                                {{ $accruedLeave['accrued_days'] }} days
-                            </h3>
-                            <p class="text-xs text-primary">{{ $accruedLeave['months_elapsed'] }} months elapsed</p>
-                        </div>
-                        <div class="mask is-squircle flex size-10 items-center justify-center bg-primary/10">
-                            <i class="fa fa-chart-line text-primary"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Leave Balance Breakdown -->
-            <div class="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2 mb-6">
-                <!-- Leave Types Breakdown -->
-                <div class="card">
-                    <div class="flex items-center justify-between px-4 py-4 sm:px-5">
-                        <h2 class="text-lg font-medium tracking-wide text-slate-700 dark:text-navy-100">
-                            Leave Types Breakdown
-                        </h2>
-                    </div>
-                    <div class="px-4 pb-4 sm:px-5">
-                        <div class="space-y-4">
-                            <!-- Sick Leave -->
-                            <div class="flex items-center justify-between p-3 rounded-lg bg-red-50 dark:bg-red-900/20">
-                                <div class="flex items-center space-x-3">
-                                    <div
-                                        class="flex size-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/40">
-                                        <i class="fa fa-thermometer-half text-red-600"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-medium text-slate-700 dark:text-navy-100">Sick Leave</p>
-                                        <p class="text-xs text-slate-500 dark:text-navy-300">
-                                            {{ $leaveBalance->sick_leave_taken }}/{{ $leaveBalance->sick_leave_entitled }}
-                                            days
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-semibold text-slate-700 dark:text-navy-100">
-                                        {{ $leaveBalance->sick_leave_balance }} days
-                                    </p>
-                                    <p class="text-xs text-slate-500 dark:text-navy-300">remaining</p>
-                                </div>
-                            </div>
-
-                            <!-- Personal Leave -->
-                            <div class="flex items-center justify-between p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                                <div class="flex items-center space-x-3">
-                                    <div
-                                        class="flex size-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/40">
-                                        <i class="fa fa-user text-blue-600"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-medium text-slate-700 dark:text-navy-100">Personal Leave</p>
-                                        <p class="text-xs text-slate-500 dark:text-navy-300">
-                                            {{ $leaveBalance->personal_leave_taken }}/{{ $leaveBalance->personal_leave_entitled }}
-                                            days
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-semibold text-slate-700 dark:text-navy-100">
-                                        {{ $leaveBalance->personal_leave_balance }} days
-                                    </p>
-                                    <p class="text-xs text-slate-500 dark:text-navy-300">remaining</p>
-                                </div>
-                            </div>
-
-                            <!-- Emergency Leave -->
-                            <div
-                                class="flex items-center justify-between p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
-                                <div class="flex items-center space-x-3">
-                                    <div
-                                        class="flex size-8 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/40">
-                                        <i class="fa fa-exclamation-triangle text-yellow-600"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-medium text-slate-700 dark:text-navy-100">Emergency Leave</p>
-                                        <p class="text-xs text-slate-500 dark:text-navy-300">
-                                            {{ $leaveBalance->emergency_leave_taken }}/{{ $leaveBalance->emergency_leave_entitled }}
-                                            days
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-semibold text-slate-700 dark:text-navy-100">
-                                        {{ $leaveBalance->emergency_leave_balance }} days
-                                    </p>
-                                    <p class="text-xs text-slate-500 dark:text-navy-300">remaining</p>
-                                </div>
-                            </div>
-
-                            <!-- Other Leave -->
-                            <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900/20">
-                                <div class="flex items-center space-x-3">
-                                    <div
-                                        class="flex size-8 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900/40">
-                                        <i class="fa fa-ellipsis-h text-gray-600"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-medium text-slate-700 dark:text-navy-100">Other Leave</p>
-                                        <p class="text-xs text-slate-500 dark:text-navy-300">
-                                            {{ $leaveBalance->other_leave_taken }}/{{ $leaveBalance->other_leave_entitled }}
-                                            days
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-semibold text-slate-700 dark:text-navy-100">
-                                        {{ $leaveBalance->other_leave_balance }} days
-                                    </p>
-                                    <p class="text-xs text-slate-500 dark:text-navy-300">remaining</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Leave Utilization Chart -->
-                <div class="card">
-                    <div class="flex items-center justify-between px-4 py-4 sm:px-5">
-                        <h2 class="text-lg font-medium tracking-wide text-slate-700 dark:text-navy-100">
-                            Leave Utilization
-                        </h2>
-                    </div>
-                    <div class="px-4 pb-4 sm:px-5">
-                        <!-- Progress Bar -->
-                        <div class="mb-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-medium text-slate-700 dark:text-navy-100">Overall
-                                    Utilization</span>
-                                <span
-                                    class="text-sm text-slate-500 dark:text-navy-300">{{ $leaveBalance->getUtilizationPercentage() }}%</span>
-                            </div>
-                            <div class="w-full bg-slate-200 rounded-full h-2 dark:bg-navy-600">
-                                <div class="h-2 rounded-full {{ $leaveBalance->getBalanceStatus() === 'critical' ? 'bg-red-500' : ($leaveBalance->getBalanceStatus() === 'warning' ? 'bg-yellow-500' : ($leaveBalance->getBalanceStatus() === 'moderate' ? 'bg-blue-500' : 'bg-green-500')) }}"
-                                    style="width: {{ $leaveBalance->getUtilizationPercentage() }}%"></div>
-                            </div>
-                        </div>
-
-                        <!-- Utilization Stats -->
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-slate-600 dark:text-navy-300">Days Entitled</span>
-                                <span
-                                    class="font-medium text-slate-700 dark:text-navy-100">{{ $leaveBalance->total_entitled }}</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-slate-600 dark:text-navy-300">Days Taken</span>
-                                <span
-                                    class="font-medium text-slate-700 dark:text-navy-100">{{ $leaveBalance->total_taken }}</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-slate-600 dark:text-navy-300">Days Remaining</span>
-                                <span
-                                    class="font-medium text-slate-700 dark:text-navy-100">{{ $leaveBalance->total_balance }}</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-slate-600 dark:text-navy-300">Accrual Rate</span>
-                                <span
-                                    class="font-medium text-slate-700 dark:text-navy-100">{{ $leaveBalance->accrual_rate_per_month }}/month</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Leave History -->
-            <div class="card">
-                <div class="flex items-center justify-between px-4 py-4 sm:px-5">
-                    <h2 class="text-lg font-medium tracking-wide text-slate-700 dark:text-navy-100">
-                        Leave History - {{ $leaveBalance->leave_year }}
-                    </h2>
-                    <div class="flex space-x-2">
-                        <select class="form-select text-xs" onchange="filterLeaveHistory(this.value)">
-                            <option value="all">All Types</option>
-                            <option value="sick">Sick Leave</option>
-                            <option value="personal">Personal Leave</option>
-                            <option value="emergency">Emergency Leave</option>
-                            <option value="other">Other Leave</option>
-                        </select>
-                        <select class="form-select text-xs" onchange="filterLeaveStatus(this.value)">
-                            <option value="all">All Status</option>
-                            <option value="approved">Approved</option>
-                            <option value="pending">Pending</option>
-                            <option value="rejected">Rejected</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="px-4 pb-4 sm:px-5">
-                    @if($leaveRequests && $leaveRequests->count() > 0)
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left" id="leave-history-table">
-                                <thead>
-                                    <tr class="border-b border-slate-200 dark:border-navy-500">
-                                        <th
-                                            class="px-4 py-3 font-semibold uppercase tracking-wide text-slate-800 dark:text-navy-100 lg:px-5">
-                                            Leave Type
-                                        </th>
-                                        <th
-                                            class="px-4 py-3 font-semibold uppercase tracking-wide text-slate-800 dark:text-navy-100 lg:px-5">
-                                            Dates
-                                        </th>
-                                        <th
-                                            class="px-4 py-3 font-semibold uppercase tracking-wide text-slate-800 dark:text-navy-100 lg:px-5">
-                                            Duration
-                                        </th>
-                                        <th
-                                            class="px-4 py-3 font-semibold uppercase tracking-wide text-slate-800 dark:text-navy-100 lg:px-5">
-                                            Reason
-                                        </th>
-                                        <th
-                                            class="px-4 py-3 font-semibold uppercase tracking-wide text-slate-800 dark:text-navy-100 lg:px-5">
-                                            Status
-                                        </th>
-                                        <th
-                                            class="px-4 py-3 font-semibold uppercase tracking-wide text-slate-800 dark:text-navy-100 lg:px-5">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-200 dark:divide-navy-500">
-                                    @foreach($leaveRequests as $request)
-                                        <tr class="leave-row hover:bg-slate-50 dark:hover:bg-navy-600"
-                                            data-type="{{ $request->leave_type }}" data-status="{{ $request->status }}">
-                                            <td class="px-4 py-3 lg:px-5">
-                                                <div class="flex items-center space-x-2">
-                                                    <span
-                                                        class="badge rounded-full {{ $request->leave_type === 'sick' ? 'bg-red-100 text-red-800' : ($request->leave_type === 'personal' ? 'bg-blue-100 text-blue-800' : ($request->leave_type === 'emergency' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800')) }}">
-                                                        {{ ucfirst($request->leave_type) }}
-                                                    </span>
-                                                    @if($request->is_emergency)
-                                                        <span class="badge rounded-full bg-red-500 text-white text-xs">
-                                                            Emergency
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                            <td class="px-4 py-3 lg:px-5">
-                                                <div class="text-sm">
-                                                    <p class="text-slate-700 dark:text-navy-100">
-                                                        {{ $request->start_date->format('M d, Y') }}
-                                                    </p>
-                                                    <p class="text-slate-500 dark:text-navy-300">
-                                                        to {{ $request->end_date->format('M d, Y') }}
-                                                    </p>
-                                                </div>
-                                            </td>
-                                            <td class="px-4 py-3 lg:px-5">
-                                                <span class="font-medium text-slate-700 dark:text-navy-100">
-                                                    {{ $request->duration }} day{{ $request->duration > 1 ? 's' : '' }}
-                                                </span>
-                                            </td>
-                                            <td class="px-4 py-3 lg:px-5">
-                                                <p class="text-sm text-slate-600 dark:text-navy-200 max-w-xs truncate">
-                                                    {{ $request->reason }}
-                                                </p>
-                                            </td>
-                                            <td class="px-4 py-3 lg:px-5">
-                                                <span class="badge rounded-full {{ $request->status_badge_class }}">
-                                                    {{ ucfirst($request->status) }}
-                                                </span>
-                                            </td>
-                                            <td class="px-4 py-3 lg:px-5">
-                                                <div class="flex space-x-2">
-                                                    <button onclick="viewLeaveDetails({{ $request->id }})"
-                                                        class="btn size-8 rounded-full p-0 hover:bg-slate-300/20">
-                                                        <i class="fa fa-eye text-slate-500"></i>
-                                                    </button>
-                                                    @if($request->status === 'pending')
-                                                        <button onclick="editLeaveRequest({{ $request->id }})"
-                                                            class="btn size-8 rounded-full p-0 hover:bg-slate-300/20">
-                                                            <i class="fa fa-edit text-slate-500"></i>
-                                                        </button>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @else
-                        <div class="text-center py-8">
-                            <div class="text-slate-400 dark:text-navy-300 mb-2">
-                                <i class="fa fa-calendar-times text-4xl"></i>
-                            </div>
-                            <p class="text-slate-500 dark:text-navy-400">No leave requests found</p>
-                            <p class="text-xs text-slate-400 dark:text-navy-300 mt-1">Submit your first leave request</p>
-                        </div>
-                    @endif
+                    <a href="{{ route('leave-requests.balances') }}"
+                        class="btn w-full bg-slate-150 font-medium text-slate-800 hover:bg-slate-200 focus:bg-slate-200 active:bg-slate-200/80">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 size-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        View All Balances
+                    </a>
                 </div>
             </div>
         </div>
     </div>
-
-    <script>
-        function filterLeaveHistory(type) {
-            const rows = document.querySelectorAll('.leave-row');
-            rows.forEach(row => {
-                if (type === 'all' || row.dataset.type === type) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        function filterLeaveStatus(status) {
-            const rows = document.querySelectorAll('.leave-row');
-            rows.forEach(row => {
-                if (status === 'all' || row.dataset.status === status) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        function viewLeaveDetails(requestId) {
-            alert('View leave details for request ID: ' + requestId);
-        }
-
-        function editLeaveRequest(requestId) {
-            alert('Edit leave request ID: ' + requestId);
-        }
-    </script>
 @endsection

@@ -74,6 +74,9 @@ class SimpleRealisticSeeder extends Seeder
         ];
 
         foreach ($names as $index => $name) {
+            // Generate unique employee number
+            $employeeNumber = $this->generateUniqueEmployeeNumber($company->id, $index + 1);
+
             User::create([
                 'first_name' => $name['first_name'],
                 'last_name' => $name['last_name'],
@@ -81,7 +84,7 @@ class SimpleRealisticSeeder extends Seeder
                 'password' => bcrypt('password'),
                 'email_verified_at' => now(),
                 'company_id' => $company->id,
-                'employee_number' => 'CHR' . str_pad($index + 1, 3, '0', STR_PAD_LEFT),
+                'employee_number' => $employeeNumber,
                 'id_number' => $this->generateSAId(),
                 'phone' => '0' . rand(60, 83) . rand(1000000, 9999999),
                 'birth_date' => Carbon::now()->subYears(rand(18, 35)),
@@ -352,6 +355,21 @@ class SimpleRealisticSeeder extends Seeder
                 'accrual_rate_per_month' => 1.75,
             ]);
         }
+    }
+
+    private function generateUniqueEmployeeNumber($companyId, $index)
+    {
+        $baseNumber = 'CHR' . str_pad($index, 3, '0', STR_PAD_LEFT);
+        $employeeNumber = $baseNumber;
+        $counter = 1;
+
+        // Check if employee number already exists and generate a unique one
+        while (User::where('employee_number', $employeeNumber)->exists()) {
+            $employeeNumber = 'CHR' . str_pad($index + ($counter * 100), 3, '0', STR_PAD_LEFT);
+            $counter++;
+        }
+
+        return $employeeNumber;
     }
 
     private function generateSAId()

@@ -53,6 +53,9 @@ class ConnectHRPayslipSeeder extends Seeder
 
         // Create missing employees
         foreach ($employees as $employeeData) {
+            // Generate unique employee number
+            $uniqueEmployeeNumber = $this->generateUniqueEmployeeNumber($company->id, $employeeData['employee_number']);
+
             $user = User::firstOrCreate(
                 ['email' => $employeeData['email']],
                 [
@@ -64,7 +67,7 @@ class ConnectHRPayslipSeeder extends Seeder
                     'company_id' => $company->id,
                     'id_number' => $employeeData['id_number'],
                     'birth_date' => Carbon::parse($employeeData['birth_date']),
-                    'employee_number' => $employeeData['employee_number'],
+                    'employee_number' => $uniqueEmployeeNumber,
                     'res_addr_line1' => '8 Greenstone PI',
                     'res_addr_line2' => 'Stoneridge Office Park',
                     'res_city' => 'Greenstone',
@@ -165,5 +168,22 @@ class ConnectHRPayslipSeeder extends Seeder
         $this->command->info("Created {$payslipCounter} payslips for " . count($employees) . " Connect HR employees (March-August 2024)");
         $this->command->info("Tax Year: 2024 (Employment period: 2024-03-01 to 2024-08-31)");
         $this->command->info("Company: Connect HR (PAYE: 7080824016)");
+    }
+
+    private function generateUniqueEmployeeNumber($companyId, $originalEmployeeNumber)
+    {
+        $employeeNumber = $originalEmployeeNumber;
+        $counter = 1;
+
+        // Check if employee number already exists and generate a unique one
+        while (User::where('employee_number', $employeeNumber)->exists()) {
+            // Extract the number part and add counter
+            $numberPart = preg_replace('/[^0-9]/', '', $originalEmployeeNumber);
+            $newNumber = (int)$numberPart + ($counter * 1000);
+            $employeeNumber = 'CHR' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+            $counter++;
+        }
+
+        return $employeeNumber;
     }
 }

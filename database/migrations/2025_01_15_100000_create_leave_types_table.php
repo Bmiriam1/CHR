@@ -70,7 +70,7 @@ return new class extends Migration
 
             // Indexes
             $table->index(['code', 'is_active']);
-            $table->index(['is_active', 'applicable_to_roles']);
+            $table->index('is_active');
         });
     }
 

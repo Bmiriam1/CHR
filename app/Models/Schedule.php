@@ -54,6 +54,7 @@ class Schedule extends Model
         'room_number',
         'building',
         'campus',
+        'province_id',
         'is_online',
         'meeting_url',
         'meeting_id',
@@ -214,6 +215,14 @@ class Schedule extends Model
     public function rescheduledFrom(): BelongsTo
     {
         return $this->belongsTo(Schedule::class, 'rescheduled_from_id');
+    }
+
+    /**
+     * Get the province where the session is held.
+     */
+    public function province(): BelongsTo
+    {
+        return $this->belongsTo(Province::class);
     }
 
     /**

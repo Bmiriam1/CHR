@@ -8,11 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Program extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected static function booted()
     {
@@ -39,79 +38,30 @@ class Program extends Model
     protected $fillable = [
         // Basic info
         'title',
-        'program_code',
+        'thumbnail',
         'description',
-        'image',
-
-        // Relationships
-        'company_id',
-        'branch_id',
-        'program_type_id',
-        'host_id',
-
-        // Dates
         'start_date',
         'end_date',
-        'enrollment_start_date',
-        'enrollment_end_date',
-        'duration_months',
-        'duration_weeks',
-        'total_training_days',
 
-        // Financial
-        'daily_rate',
-        'monthly_stipend',
-        'transport_allowance',
-        'meal_allowance',
-        'accommodation_allowance',
-        'other_allowance',
-        'other_allowance_description',
-        'payment_frequency',
-        'payment_day_of_month',
-
-        // Compliance
-        'section_12h_eligible',
-        'section_12h_contract_number',
-        'section_12h_start_date',
-        'section_12h_end_date',
-        'section_12h_allowance',
-        'eti_eligible_program',
-        'eti_category',
-        'nqf_level',
-        'saqa_id',
-        'qualification_title',
-
-        // Logistics
+        // Location & Category
         'location_type',
-        'venue',
-        'venue_address',
-        'max_learners',
-        'min_learners',
-        'enrolled_count',
-
-        // BBBEE
         'bbbee_category',
-        'is_client_hosting',
-        'specific_requirements',
 
-        // Metrics
+        // Requirements & Performance
+        'specific_requirements',
         'learner_retention_rate',
         'completion_rate',
         'placement_rate',
 
         // Staff
         'coordinator_id',
+        'program_type_id',
         'creator_id',
-
-        // Status
-        'status',
-        'is_approved',
-        'approved_at',
-        'approved_by',
 
         // System
         'sort_order',
-        'additional_settings',
+        'is_approved',
+        'is_payment_received',
     ];
 
     /**
@@ -120,22 +70,8 @@ class Program extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
-        'enrollment_start_date' => 'date',
-        'enrollment_end_date' => 'date',
-        'daily_rate' => 'decimal:2',
-        'monthly_stipend' => 'decimal:2',
-        'transport_allowance' => 'decimal:2',
-        'meal_allowance' => 'decimal:2',
-        'accommodation_allowance' => 'decimal:2',
-        'other_allowance' => 'decimal:2',
-        'section_12h_eligible' => 'boolean',
-        'section_12h_start_date' => 'date',
-        'section_12h_end_date' => 'date',
-        'section_12h_allowance' => 'decimal:2',
-        'eti_eligible_program' => 'boolean',
         'is_approved' => 'boolean',
-        'approved_at' => 'datetime',
-        'additional_settings' => 'array',
+        'is_payment_received' => 'boolean',
     ];
 
     /**

@@ -15,10 +15,12 @@ class DatabaseSeeder extends Seeder
     {
         // Run all seeders in the required order
         $this->call([
+            SouthAfricanProvincesSeeder::class, // Must run first - other seeders depend on provinces
             RolePermissionSeeder::class,
             ComplianceTestSeeder::class,
             SALeaveTypesSeeder::class,
             TestCompanySeeder::class,
+            SimpleRealisticSeeder::class,
             ConnectHRPayslipSeeder::class,
             SimCardAllocationSeeder::class,
             TestRolesSeeder::class,

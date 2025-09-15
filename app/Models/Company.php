@@ -29,7 +29,7 @@ class Company extends Model
         'vat_vendor',
         'sic_code',
         'industry_sector',
-        
+
         // SARS compliance
         'paye_reference_number',
         'uif_reference_number',
@@ -40,21 +40,21 @@ class Company extends Model
         'sdl_registration_date',
         'tax_year_end',
         'first_paye_period',
-        
+
         // Contact info
         'email',
         'phone',
         'fax',
         'website',
-        
+
         // Physical address
         'physical_address_line1',
         'physical_address_line2',
         'physical_suburb',
         'physical_city',
         'physical_postal_code',
-        'physical_country_code',
-        
+        'postal_country_code',
+
         // Postal address
         'postal_address_line1',
         'postal_address_line2',
@@ -62,21 +62,21 @@ class Company extends Model
         'postal_city',
         'postal_code',
         'postal_country_code',
-        
+
         // Payroll settings
         'default_pay_frequency',
         'pay_day_of_month',
-        
+
         // ETI settings
         'eti_registered',
         'eti_registration_date',
         'eti_certificate_number',
-        
+
         // UIF & SDL
         'uif_exempt',
         'sdl_exempt',
         'sdl_rate_override',
-        
+
         // Leave policies
         'annual_leave_days',
         'sick_leave_days',
@@ -86,14 +86,14 @@ class Company extends Model
         'allow_leave_encashment',
         'leave_notice_days',
         'max_consecutive_days',
-        
+
         // Banking
         'bank_name',
         'bank_branch_code',
         'bank_account_number',
         'bank_account_type',
         'bank_account_holder',
-        
+
         // System settings
         'is_active',
         'is_verified',
@@ -103,11 +103,11 @@ class Company extends Model
         'billing_active',
         'max_learners',
         'max_programs',
-        
+
         // JSON fields
         'compliance_settings',
         'notification_preferences',
-        
+
         // Timestamps
         'last_compliance_check',
         'last_backup_date',
@@ -229,7 +229,7 @@ class Company extends Model
     public function getCompanyGroup()
     {
         $root = $this->getRootParent();
-        
+
         return Company::where('id', $root->id)
             ->orWhere('parent_company_id', $root->id)
             ->get();
@@ -240,9 +240,9 @@ class Company extends Model
      */
     public function hasEtiEnabled(): bool
     {
-        return $this->eti_registered && 
-               $this->eti_registration_date && 
-               $this->eti_certificate_number;
+        return $this->eti_registered &&
+            $this->eti_registration_date &&
+            $this->eti_certificate_number;
     }
 
     /**
@@ -306,9 +306,9 @@ class Company extends Model
      */
     public function hasActiveSubscription(): bool
     {
-        return $this->billing_active && 
-               $this->subscription_end_date && 
-               $this->subscription_end_date->isFuture();
+        return $this->billing_active &&
+            $this->subscription_end_date &&
+            $this->subscription_end_date->isFuture();
     }
 
     /**
@@ -327,5 +327,13 @@ class Company extends Model
     {
         $currentCount = $this->programs()->where('status', '!=', 'completed')->count();
         return max(0, $this->max_programs - $currentCount);
+    }
+
+    /**
+     * Get the province that owns the company.
+     */
+    public function province(): BelongsTo
+    {
+        return $this->belongsTo(Province::class);
     }
 }

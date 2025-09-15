@@ -106,3 +106,4 @@ class SeedLeaveManagement extends Command
         $this->info('✅ Leave management system is ready to use!');
     }
 }
+

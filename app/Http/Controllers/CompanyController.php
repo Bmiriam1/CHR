@@ -50,7 +50,7 @@ class CompanyController extends Controller
     {
         $user = auth()->user();
         $parentCompany = null;
-        
+
         // Only get parent company if user has a company assigned
         if ($user->hasCompany() && $user->company) {
             $parentCompany = $user->company->getRootParent();
@@ -87,7 +87,7 @@ class CompanyController extends Controller
 
         $user = auth()->user();
         $parentCompany = null;
-        
+
         // Get parent company if user has one, otherwise this will be a root company
         if ($user->hasCompany() && $user->company) {
             $parentCompany = $user->company->getRootParent();
@@ -108,7 +108,7 @@ class CompanyController extends Controller
             'physical_postal_code' => $request->physical_postal_code,
             'is_active' => $request->boolean('is_active', true),
             // Inherit some settings from parent
-            'physical_country_code' => $parentCompany->physical_country_code ?? 'ZA',
+            'postal_country_code' => $parentCompany->postal_country_code ?? 'ZA',
             'default_pay_frequency' => $parentCompany->default_pay_frequency,
             'subscription_tier' => $parentCompany->subscription_tier,
             'billing_active' => true,
@@ -128,11 +128,11 @@ class CompanyController extends Controller
         // Ensure user can access this company
         $user = auth()->user();
         $userCompany = $user->company;
-        
+
         if (!$userCompany) {
             return redirect()->route('dashboard')->with('error', 'No company associated with your account.');
         }
-        
+
         $allowedCompanies = $userCompany->getCompanyGroup()->pluck('id');
 
         if (!$allowedCompanies->contains($company->id)) {
@@ -147,11 +147,11 @@ class CompanyController extends Controller
         // Load programs without global scope to avoid tenant filtering
         // Only show programs that the user has access to (same company or parent company)
         $userCompany = $user->company;
-        
+
         if (!$userCompany) {
             return redirect()->route('dashboard')->with('error', 'No company associated with your account.');
         }
-        
+
         $allowedCompanyIds = $userCompany->getCompanyGroup()->pluck('id');
 
         $programs = Program::withoutGlobalScopes()
@@ -191,11 +191,11 @@ class CompanyController extends Controller
         // Ensure user can access this company
         $user = auth()->user();
         $userCompany = $user->company;
-        
+
         if (!$userCompany) {
             return redirect()->route('dashboard')->with('error', 'No company associated with your account.');
         }
-        
+
         $allowedCompanies = $userCompany->getCompanyGroup()->pluck('id');
 
         if (!$allowedCompanies->contains($company->id)) {
@@ -215,11 +215,11 @@ class CompanyController extends Controller
         // Ensure user can access this company
         $user = auth()->user();
         $userCompany = $user->company;
-        
+
         if (!$userCompany) {
             return redirect()->route('dashboard')->with('error', 'No company associated with your account.');
         }
-        
+
         $allowedCompanies = $userCompany->getCompanyGroup()->pluck('id');
 
         if (!$allowedCompanies->contains($company->id)) {
@@ -274,11 +274,11 @@ class CompanyController extends Controller
         // Ensure user can access this company
         $user = auth()->user();
         $userCompany = $user->company;
-        
+
         if (!$userCompany) {
             return redirect()->route('dashboard')->with('error', 'No company associated with your account.');
         }
-        
+
         $allowedCompanies = $userCompany->getCompanyGroup()->pluck('id');
 
         if (!$allowedCompanies->contains($company->id)) {
@@ -309,11 +309,11 @@ class CompanyController extends Controller
         // Ensure user can access this company
         $user = auth()->user();
         $userCompany = $user->company;
-        
+
         if (!$userCompany) {
             return redirect()->route('dashboard')->with('error', 'No company associated with your account.');
         }
-        
+
         $allowedCompanies = $userCompany->getCompanyGroup()->pluck('id');
 
         if (!$allowedCompanies->contains($company->id)) {
@@ -338,11 +338,11 @@ class CompanyController extends Controller
         // Ensure user can access this company
         $user = auth()->user();
         $userCompany = $user->company;
-        
+
         if (!$userCompany) {
             return redirect()->route('dashboard')->with('error', 'No company associated with your account.');
         }
-        
+
         $allowedCompanies = $userCompany->getCompanyGroup()->pluck('id');
 
         if (!$allowedCompanies->contains($company->id)) {

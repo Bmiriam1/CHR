@@ -89,8 +89,6 @@ return new class extends Migration
              * ─────────────────────────────────────────────────────────────────────────────
              */
             $table->enum('location_type', ['onsite', 'online', 'hybrid'])->default('onsite');
-            $table->string('venue')->nullable();
-            $table->text('venue_address')->nullable();
 
             // Capacity and limits
             $table->unsignedSmallInteger('max_learners')->default(25);

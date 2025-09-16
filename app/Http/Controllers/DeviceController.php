@@ -22,7 +22,8 @@ class DeviceController extends Controller
                 $q->whereIn('company_id', $allowedCompanyIds);
             });
 
-        if ($request->has('status')) {
+        //Changed from has() to filled() to properly handle empty filter values
+        if ($request->filled('status')) {
             match($request->status) {
                 'active' => $query->active(),
                 'blocked' => $query->blocked(),
@@ -32,11 +33,13 @@ class DeviceController extends Controller
             };
         }
 
-        if ($request->has('platform')) {
+        // Changed from has() to filled() to properly handle empty filter values
+        if ($request->filled('platform')) {
             $query->byPlatform($request->platform);
         }
 
-        if ($request->has('search')) {
+        // Changed from has() to filled() to properly handle empty search values
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('device_name', 'like', "%{$search}%")
@@ -50,7 +53,8 @@ class DeviceController extends Controller
             });
         }
 
-        $devices = $query->latest('last_seen_at')->paginate(15);
+        // Added appends() to preserve query parameters in pagination links
+        $devices = $query->latest('last_seen_at')->paginate(15)->appends($request->all());
 
         $stats = [
             'total' => Device::whereHas('user', fn($q) => $q->whereIn('company_id', $allowedCompanyIds))->count(),

@@ -78,69 +78,62 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Filters -->
-            <div class="card mt-6">
-                <div class="p-4 sm:p-5">
-                    <form method="GET" class="flex flex-wrap items-end gap-4">
-                        <!-- Search -->
-                        <div class="flex-1 min-w-48 max-w-md">
-                            <label class="block text-xs+ font-medium text-slate-700 dark:text-navy-100 mb-1">Search</label>
-                            <input name="search" value="{{ request('search') }}"
-                                class="form-input w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 placeholder:text-slate-400/70 hover:border-slate-400 focus:border-primary dark:border-navy-450 dark:hover:border-navy-400 dark:focus:border-accent"
-                                placeholder="Search devices, users, models..." />
-                        </div>
-
-                        <!-- Status Filter -->
-                        <div class="min-w-32 max-w-48">
-                            <label class="block text-xs+ font-medium text-slate-700 dark:text-navy-100 mb-1">Status</label>
-                            <select name="status"
-                                class="form-select w-full rounded-lg border border-slate-300 bg-white px-3 py-2 hover:border-slate-400 focus:border-primary dark:border-navy-450 dark:bg-navy-700 dark:hover:border-navy-400 dark:focus:border-accent">
-                                <option value="">All Statuses</option>
-                                <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="blocked" {{ request('status') === 'blocked' ? 'selected' : '' }}>Blocked
-                                </option>
-                                <option value="needs_approval" {{ request('status') === 'needs_approval' ? 'selected' : '' }}>
-                                    Needs Approval</option>
-                                <option value="pending_sync" {{ request('status') === 'pending_sync' ? 'selected' : '' }}>
-                                    Pending Sync</option>
-                            </select>
-                        </div>
-
-                        <!-- Platform Filter -->
-                        <div class="min-w-32 max-w-48">
-                            <label
-                                class="block text-xs+ font-medium text-slate-700 dark:text-navy-100 mb-1">Platform</label>
-                            <select name="platform"
-                                class="form-select w-full rounded-lg border border-slate-300 bg-white px-3 py-2 hover:border-slate-400 focus:border-primary dark:border-navy-450 dark:bg-navy-700 dark:hover:border-navy-400 dark:focus:border-accent">
-                                <option value="">All Platforms</option>
-                                <option value="ios" {{ request('platform') === 'ios' ? 'selected' : '' }}>iOS</option>
-                                <option value="android" {{ request('platform') === 'android' ? 'selected' : '' }}>Android
-                                </option>
-                                <option value="web" {{ request('platform') === 'web' ? 'selected' : '' }}>Web</option>
-                                <option value="windows" {{ request('platform') === 'windows' ? 'selected' : '' }}>Windows
-                                </option>
-                                <option value="macos" {{ request('platform') === 'macos' ? 'selected' : '' }}>macOS</option>
-                                <option value="linux" {{ request('platform') === 'linux' ? 'selected' : '' }}>Linux</option>
-                            </select>
-                        </div>
-
-                        <!-- Buttons -->
-                        <div class="flex gap-2">
-                            <button type="submit"
-                                class="btn bg-primary font-medium text-white hover:bg-primary-focus focus:bg-primary-focus active:bg-primary-focus/90">
-                                Filter
-                            </button>
-                            @if(request()->hasAny(['search', 'status', 'platform']))
-                                <a href="{{ route('devices.index') }}"
-                                    class="btn border border-slate-300 font-medium text-slate-700 hover:bg-slate-150 focus:bg-slate-150 dark:border-navy-450 dark:text-navy-100 dark:hover:bg-navy-500 dark:focus:bg-navy-500">
-                                    Clear
-                                </a>
-                            @endif
-                        </div>
-                    </form>
-                </div>
+<!-- Filters -->
+<div class="card mt-6">
+    <div class="p-4 sm:p-5">
+        <form method="GET" class="flex flex-wrap items-end gap-4">
+            <!-- Search -->
+            <div class="flex-1 min-w-48 max-w-md">
+                <label class="block text-xs+ font-medium text-slate-700 dark:text-navy-100 mb-1">Search</label>
+                <input name="search" value="{{ request('search') }}"
+                    class="form-input w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 placeholder:text-slate-400/70 hover:border-slate-400 focus:border-primary dark:border-navy-450 dark:hover:border-navy-400 dark:focus:border-accent"
+                    placeholder="Search devices, users, models..." />
             </div>
+
+            <!-- Status Filter -->
+            <div class="min-w-32 max-w-48">
+                <label class="block text-xs+ font-medium text-slate-700 dark:text-navy-100 mb-1">Status</label>
+                <select name="status"
+                    class="form-select w-full rounded-lg border border-slate-300 bg-white px-3 py-2 hover:border-slate-400 focus:border-primary dark:border-navy-450 dark:bg-navy-700 dark:hover:border-navy-400 dark:focus:border-accent">
+                    <option value="" hidden>All Statuses</option>
+                    <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                    <option value="blocked" {{ request('status') === 'blocked' ? 'selected' : '' }}>Blocked</option>
+                    <option value="needs_approval" {{ request('status') === 'needs_approval' ? 'selected' : '' }}>Needs Approval</option>
+                    <option value="pending_sync" {{ request('status') === 'pending_sync' ? 'selected' : '' }}>Pending Sync</option>
+                </select>
+            </div>
+
+            <!-- Platform Filter -->
+            <div class="min-w-32 max-w-52">
+                <label class="block text-xs+ font-medium text-slate-700 dark:text-navy-100 mb-1">Platform</label>
+                <select name="platform"
+                    class="form-select w-full rounded-lg border border-slate-300 bg-white px-3 py-2 hover:border-slate-400 focus:border-primary dark:border-navy-450 dark:bg-navy-700 dark:hover:border-navy-400 dark:focus:border-accent">
+                    <option value="" hidden>All Platforms</option>
+                    <option value="ios" {{ request('platform') === 'ios' ? 'selected' : '' }}>iOS</option>
+                    <option value="android" {{ request('platform') === 'android' ? 'selected' : '' }}>Android</option>
+                    <option value="web" {{ request('platform') === 'web' ? 'selected' : '' }}>Web</option>
+                    <option value="windows" {{ request('platform') === 'windows' ? 'selected' : '' }}>Windows</option>
+                    <option value="macos" {{ request('platform') === 'macos' ? 'selected' : '' }}>macOS</option>
+                    <option value="linux" {{ request('platform') === 'linux' ? 'selected' : '' }}>Linux</option>
+                </select>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex gap-2">
+                <button type="submit"
+                    class="btn bg-primary font-medium text-white hover:bg-primary-focus focus:bg-primary-focus active:bg-primary-focus/90">
+                    Filter
+                </button>
+                @if(request()->hasAny(['search', 'status', 'platform']))
+                    <a href="{{ route('devices.index') }}"
+                        class="btn border border-slate-300 font-medium text-slate-700 hover:bg-slate-150 focus:bg-slate-150 dark:border-navy-450 dark:text-navy-100 dark:hover:bg-navy-500 dark:focus:bg-navy-500">
+                        Clear
+                    </a>
+                @endif
+            </div>
+        </form>
+    </div>
+</div>
 
             <!-- Devices Table -->
             <div class="card mt-6">
@@ -343,6 +336,7 @@
                     <i class="fa-solid fa-times"></i>
                 </button>
             </div>
+            
             <form id="blockDeviceForm" method="POST">
                 @csrf
                 @method('PATCH')

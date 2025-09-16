@@ -48,4 +48,5 @@ Route::middleware('auth:sanctum')->group(function () {
     // Attendance data
     Route::get('/attendance/summary', [AttendanceApiController::class, 'getAttendanceSummary']);
     Route::get('/attendance/user/{user_id}', [AttendanceApiController::class, 'getUserAttendance']);
+
 });

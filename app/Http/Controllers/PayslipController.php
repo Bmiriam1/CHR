@@ -144,13 +144,16 @@ class PayslipController extends Controller
         return view('payslips.generate');
     }
 
-    public function download(Payslip $payslip)
-    {
-        // This would generate a PDF payslip
-        // For now, just return the view
-        $payslip->load(['user', 'program']);
-        return view('payslips.download', compact('payslip'));
+   public function download(Payslip $payslip)
+{
+    // Example: if payslip has a stored PDF path
+    if ($payslip->pdf_path && file_exists(storage_path('app/' . $payslip->pdf_path))) {
+        return response()->download(storage_path('app/' . $payslip->pdf_path));
     }
+
+    // Or generate dynamically if you don’t store files
+    return back()->with('error', 'Payslip file not found.');
+}
 
     public function approve(Payslip $payslip)
     {

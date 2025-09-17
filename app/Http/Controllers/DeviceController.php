@@ -53,7 +53,7 @@ class DeviceController extends Controller
             });
         }
 
-        // Added appends() to preserve query parameters in pagination links
+        // Added appends() to keep query parameters in pagination links
         $devices = $query->latest('last_seen_at')->paginate(15)->appends($request->all());
 
         $stats = [

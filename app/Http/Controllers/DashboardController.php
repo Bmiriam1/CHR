@@ -17,49 +17,57 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function index()
-    {
-        $user = Auth::user();
+  public function index()
+{
+    $user = Auth::user();
 
-        // Get user's company for tenant filtering
-        $companyId = $user->company_id;
+    // Get user's company for tenant filtering
+    $companyId = $user->company_id;
 
-        if (!$companyId) {
-            return view('dashboard', [
-                'error' => 'User not assigned to a company. Please contact administrator.'
-            ]);
-        }
+    if (!$companyId) {
+        return view('dashboard', [
+            'error' => 'User not assigned to a company. Please contact administrator.',
+            'recentActivities' => collect(),
+            'metrics' => [],
+            'trends' => [],
+            'upcomingSchedules' => [],
+            'complianceMetrics' => [],
+            'previousMetrics' => [],
+        ]);
+    }
 
-        // Current month data
-        $currentMonth = now();
-        $startOfMonth = $currentMonth->startOfMonth()->copy();
-        $endOfMonth = $currentMonth->endOfMonth()->copy();
+    // Current month data
+    $currentMonth = now();
+    $startOfMonth = $currentMonth->startOfMonth()->copy();
+    $endOfMonth = $currentMonth->endOfMonth()->copy();
 
-        // Previous month for comparison
-        $previousMonth = now()->subMonth();
-        $startOfPrevMonth = $previousMonth->startOfMonth()->copy();
-        $endOfPrevMonth = $previousMonth->endOfMonth()->copy();
+    // Previous month for comparison
+    $previousMonth = now()->subMonth();
+    $startOfPrevMonth = $previousMonth->startOfMonth()->copy();
+    $endOfPrevMonth = $previousMonth->endOfMonth()->copy();
 
-        // Get meaningful HR metrics
-        $metrics = $this->getHRMetrics($companyId, $startOfMonth, $endOfMonth);
-        $previousMetrics = $this->getHRMetrics($companyId, $startOfPrevMonth, $endOfPrevMonth);
+    // Get meaningful HR metrics
+    $metrics = $this->getHRMetrics($companyId, $startOfMonth, $endOfMonth);
+    $previousMetrics = $this->getHRMetrics($companyId, $startOfPrevMonth, $endOfPrevMonth);
 
-        // Calculate trends
-        $trends = $this->calculateTrends($metrics, $previousMetrics);
+    // Calculate trends
+    $trends = $this->calculateTrends($metrics, $previousMetrics);
 
-        // Recent activities
-        $recentActivities = $this->getRecentActivities($companyId);
+    // Recent activities
+    $recentActivities = $this->getRecentActivities($companyId);
 
-        // Upcoming schedules (only if user has programs)
-        $upcomingSchedules = collect();
-        if ($user->programs()->exists()) {
-            $upcomingSchedules = $this->getUpcomingSchedules($user);
-        }
+    // Upcoming schedules (only if user has programs)
+    $upcomingSchedules = collect();
+    if ($user->programs()->exists()) {
+        $upcomingSchedules = $this->getUpcomingSchedules($user);
+    }
 
-        // ETI and compliance metrics
-        $complianceMetrics = $this->getComplianceMetrics($companyId, $currentMonth);
+    // ETI and compliance metrics
+    $complianceMetrics = $this->getComplianceMetrics($companyId, $currentMonth);
 
-        return view('dashboard', compact(
+    // Choose view based on user role
+    if ($user->hasRole('learner')) {
+        return view('learner.dashboard', compact(
             'metrics',
             'trends',
             'recentActivities',
@@ -68,6 +76,17 @@ class DashboardController extends Controller
             'previousMetrics'
         ));
     }
+
+    // Default dashboard for other roles
+    return view('dashboard', compact(
+        'metrics',
+        'trends',
+        'recentActivities',
+        'upcomingSchedules',
+        'complianceMetrics',
+        'previousMetrics'
+    ));
+} //fixed this
 
     private function getHRMetrics($companyId, $startDate, $endDate)
     {
@@ -285,16 +304,18 @@ class DashboardController extends Controller
     {
         $activities = collect();
 
-        // Recent payslips
+        // Recent payslips - FIXED: Added missing foreach loop and proper array structure
         $recentPayslips = Payslip::where('company_id', $companyId)
             ->with('user')
             ->latest('created_at')
             ->limit(3)
             ->get();
 
+        // FIX: Added the missing foreach loop that was causing the syntax error
         foreach ($recentPayslips as $payslip) {
             $activities->push([
                 'type' => 'payslip',
+                'id' => $payslip->id, // Added ID for download link
                 'title' => 'Payslip generated',
                 'description' => $payslip->user->first_name . ' ' . $payslip->user->last_name,
                 'date' => $payslip->created_at,

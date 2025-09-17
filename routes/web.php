@@ -39,7 +39,7 @@ Route::get('/', function () {
 
         // Redirect based on user role
         if ($user->hasRole('learner')) {
-            return view('learner.dashboard');
+            return app(\App\Http\Controllers\DashboardController::class)->index();
         } elseif ($user->hasRole(['admin', 'hr_manager', 'company_admin'])) {
             return app(\App\Http\Controllers\DashboardController::class)->index();
         }
@@ -51,20 +51,12 @@ Route::get('/', function () {
     return redirect()->route('login');
 })->name('home');
 
-// Dashboard
-Route::get('/dashboard', function () {
-    $user = auth()->user();
 
-    // Redirect based on user role
-    if ($user->hasRole('learner')) {
-        return view('learner.dashboard');
-    } elseif ($user->hasRole(['admin', 'hr_manager', 'company_admin'])) {
-        return app(\App\Http\Controllers\DashboardController::class)->index();
-    }
-
-    return app(\App\Http\Controllers\DashboardController::class)->index();
-})->middleware(['auth', 'verified'])->name('dashboard');
-
+    // Dashboard
+   Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+    
 Route::middleware('auth')->group(function () {
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -129,8 +121,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('payslips', PayslipController::class);
 
     // Distinct route names to avoid duplication
-    Route::get('payslips/generate/form', [PayslipController::class, 'generateForm'])
-        ->name('payslips.generate.form'); // GET form
+    Route::get('payslips/{payslip}/download', [PayslipController::class, 'download'])
+     ->name('payslips.download'); //GET
 
     Route::post('payslips/generate', [PayslipController::class, 'generate'])
         ->name('payslips.generate');      // POST action

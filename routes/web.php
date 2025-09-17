@@ -56,7 +56,7 @@ Route::get('/', function () {
    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
-    
+
 Route::middleware('auth')->group(function () {
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -188,6 +188,7 @@ Route::middleware('auth')->group(function () {
         Route::post('tax-certificates/irp5', [ComplianceController::class, 'generateIrp5'])->name('tax_certificates.irp5');
         Route::post('tax-certificates/irp5-csv', [ComplianceController::class, 'generateIrp5Csv'])->name('tax_certificates.irp5_csv');
         Route::post('tax-certificates/it3a', [ComplianceController::class, 'generateIt3a'])->name('tax_certificates.it3a');
+        Route::post('/compliance/tax-certificates/it3a', [ComplianceController::class, 'generateIt3a'])->name('compliance.tax_certificates.it3a');
 
         // UIF Exports
         Route::get('uif', [ComplianceController::class, 'uifForm'])->name('uif.form');

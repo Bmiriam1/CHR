@@ -17,6 +17,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use Barryvdh\DomPDF\Facade\Pdf; // Add this import for PDF generation
 
 class ComplianceController extends Controller
 {
@@ -228,6 +229,60 @@ class ComplianceController extends Controller
     }
 
     /**
+     * Generate IT3(a) certificates - MISSING METHOD FIXED
+     */
+    public function generateIt3a(Request $request): Response
+    {
+        $validated = $request->validate([
+            'company_id' => 'required|exists:companies,id',
+            'tax_year' => 'required|integer',
+            'user_ids' => 'nullable|array',
+            'user_ids.*' => 'exists:users,id',
+        ]);
+
+        $company = Company::findOrFail($validated['company_id']);
+        $taxYear = $validated['tax_year'];
+
+        $startDate = Carbon::create($taxYear, 3, 1);
+        $endDate = Carbon::create($taxYear + 1, 2, 28)->endOfMonth();
+
+        $query = Payslip::where('company_id', $company->id)
+            ->whereBetween('pay_date', [$startDate, $endDate])
+            ->whereIn('status', ['paid', 'processed'])
+            ->with('user');
+
+        if (!empty($validated['user_ids'])) {
+            $query->whereIn('user_id', $validated['user_ids']);
+        }
+
+        $payslips = $query->get();
+        
+        // Group by employee
+        $employeeData = $payslips->groupBy('user_id')->map(function ($userPayslips) {
+            $user = $userPayslips->first()->user;
+            return [
+                'employee' => $user,
+                'total_remuneration' => $userPayslips->sum('taxable_earnings'),
+                'total_paye' => $userPayslips->sum('paye_tax'),
+                'total_uif_employee' => $userPayslips->sum('uif_employee'),
+                'months_worked' => $userPayslips->count(),
+            ];
+        });
+
+        $data = [
+            'company' => $company,
+            'tax_year' => $taxYear,
+            'employees' => $employeeData,
+            'generated_at' => now(),
+        ];
+
+        // Generate PDF using a view
+        $pdf = PDF::loadView('compliance.certificates.it3a', $data);
+        
+        return $pdf->download('IT3A_Certificates_' . $company->name . '_' . $taxYear . '.pdf');
+    }
+
+    /**
      * Generate IRP5 certificates.
      */
     public function generateIrp5(Request $request): Response
@@ -255,12 +310,38 @@ class ComplianceController extends Controller
         }
 
         $payslips = $query->get();
-        $certificates = $this->generateIrp5Certificates($payslips, $company, $taxYear);
+        
+        // Group by employee for individual certificates
+        $employeeData = $payslips->groupBy('user_id')->map(function ($userPayslips) {
+            $user = $userPayslips->first()->user;
+            return [
+                'employee' => $user,
+                'total_remuneration' => $userPayslips->sum('taxable_earnings'),
+                'total_paye' => $userPayslips->sum('paye_tax'),
+                'total_uif_employee' => $userPayslips->sum('uif_employee'),
+                'months_worked' => $userPayslips->count(),
+                'sars_codes' => [
+                    '3601' => $userPayslips->sum('sars_3601'),
+                    '3605' => $userPayslips->sum('sars_3605'),
+                    '3615' => $userPayslips->sum('sars_3615'),
+                    '3617' => $userPayslips->sum('sars_3617'),
+                    '3627' => $userPayslips->sum('sars_3627'),
+                    '3699' => $userPayslips->sum('sars_3699'),
+                ],
+            ];
+        });
 
-        return response($certificates, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="IRP5_Certificates_' . $taxYear . '.pdf"',
-        ]);
+        $data = [
+            'company' => $company,
+            'tax_year' => $taxYear,
+            'employees' => $employeeData,
+            'generated_at' => now(),
+        ];
+
+        // Generate PDF using a view
+        $pdf = PDF::loadView('compliance.certificates.irp5', $data);
+        
+        return $pdf->download('IRP5_Certificates_' . $company->name . '_' . $taxYear . '.pdf');
     }
 
     /**
@@ -1031,15 +1112,6 @@ class ComplianceController extends Controller
         }
 
         return $field;
-    }
-
-    /**
-     * Generate IRP5 certificates.
-     */
-    private function generateIrp5Certificates($payslips, $company, $taxYear): string
-    {
-        // This would generate PDF certificates using a PDF library
-        return "IRP5 Certificates would be generated here for tax year {$taxYear}";
     }
 
     /**

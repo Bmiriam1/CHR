@@ -34,5 +34,11 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    
+    'banking_api' => [
+        'url' => env('BANKING_API_URL'),
+        'key' => env('BANKING_API_KEY'),
+        'webhook_secret' => env('BANKING_WEBHOOK_SECRET'),
+    ],
 
 ];

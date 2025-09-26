@@ -1,0 +1,70 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            // Only add columns that don't exist
+            if (!Schema::hasColumn('users', 'banking_statement')) {
+                $table->string('banking_statement')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'banking_statement_verified')) {
+                $table->boolean('banking_statement_verified')->default(false);
+            }
+            if (!Schema::hasColumn('users', 'id_document')) {
+                $table->string('id_document')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'id_verified')) {
+                $table->boolean('id_verified')->default(false);
+            }
+            if (!Schema::hasColumn('users', 'proof_of_residence')) {
+                $table->string('proof_of_residence')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'proof_of_residence_verified')) {
+                $table->boolean('proof_of_residence_verified')->default(false);
+            }
+            if (!Schema::hasColumn('users', 'account_holder_name')) {
+                $table->string('account_holder_name')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'banking_verified')) {
+                $table->boolean('banking_verified')->default(false);
+            }
+            if (!Schema::hasColumn('users', 'date_of_birth')) {
+                $table->date('date_of_birth')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'phone_number')) {
+                $table->string('phone_number')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'physical_address')) {
+                $table->text('physical_address')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'emergency_contact_name')) {
+                $table->string('emergency_contact_name')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'emergency_contact_phone')) {
+                $table->string('emergency_contact_phone')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'education_level')) {
+                $table->enum('education_level', ['matric', 'diploma', 'degree', 'postgraduate', 'other'])->nullable();
+            }
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn([
+                'banking_statement', 'banking_statement_verified', 'id_document',
+                'id_verified', 'proof_of_residence', 'proof_of_residence_verified',
+                'account_holder_name', 'banking_verified', 'date_of_birth',
+                'phone_number', 'physical_address', 'emergency_contact_name',
+                'emergency_contact_phone', 'education_level'
+            ]);
+        });
+    }
+};

@@ -55,6 +55,33 @@ class User extends Authenticatable
         'post_suburb',
         'post_city',
         'post_postcode',
+        
+        // New document upload fields
+        'qualification_document',
+        'cv_document',
+        'banking_statement',
+        'id_document',
+        'proof_of_residence',
+        
+        // Document verification status
+        'qualification_verified',
+        'cv_verified',
+        'banking_statement_verified',
+        'id_verified',
+        'proof_of_residence_verified',
+        
+        // Additional banking details for verification
+        'account_holder_name',
+        'account_type',
+        'banking_verified',
+        
+        // Additional learner fields
+        'date_of_birth',
+        'phone_number',
+        'physical_address',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'education_level',
     ];
 
     /**
@@ -77,6 +104,18 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'birth_date' => 'date',
+            'employment_start_date' => 'date',
+            'date_of_birth' => 'date',
+            'qualification_verified' => 'boolean',
+            'cv_verified' => 'boolean',
+            'banking_statement_verified' => 'boolean',
+            'id_verified' => 'boolean',
+            'proof_of_residence_verified' => 'boolean',
+            'banking_verified' => 'boolean',
+            'eti_eligible' => 'boolean',
+            'is_learner' => 'boolean',
+            'is_employee' => 'boolean',
         ];
     }
 
@@ -216,5 +255,54 @@ class User extends Authenticatable
     public function scopeForCompany($query, $companyId)
     {
         return $query->where('company_id', $companyId);
+    }
+
+    /**
+     * Get the full path for a document
+     */
+    public function getDocumentPath($documentType)
+    {
+        $document = $this->{$documentType . '_document'};
+        return $document ? storage_path('app/private/' . $document) : null;
+    }
+    
+    /**
+     * Check if user has all required documents
+     */
+    public function hasAllDocuments()
+    {
+        $requiredDocuments = ['qualification', 'cv', 'banking_statement', 'id_document'];
+        
+        foreach ($requiredDocuments as $doc) {
+            if (!$this->{$doc . '_document'}) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Check if all documents are verified
+     */
+    public function allDocumentsVerified()
+    {
+        $requiredDocuments = ['qualification', 'cv', 'banking_statement', 'id_document'];
+        
+        foreach ($requiredDocuments as $doc) {
+            if (!$this->{$doc . '_verified'}) {
+                return false;
+            }
+        }
+        
+        return $this->banking_verified;
+    }
+
+    /**
+     * Get user's full name (compatibility method for profile forms)
+     */
+    public function getNameAttribute()
+    {
+        return trim($this->first_name . ' ' . $this->last_name);
     }
 }

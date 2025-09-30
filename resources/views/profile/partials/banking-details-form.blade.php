@@ -157,6 +157,17 @@
                 </div>
             </div>
         @endif
+
+    <!-- CSS at the top to force button styles since the button color isnt working like it should -->
+    <style>
+    button[type="submit"].bg-blue-600 {
+        background-color: #2563EB !important;
+        color: white !important;
+    }
+    button[type="submit"].bg-blue-700:hover {
+        background-color: #1D4ED8 !important;
+    }
+    </style>
         
         <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-600">
             <button type="submit" 

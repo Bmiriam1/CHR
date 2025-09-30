@@ -76,9 +76,9 @@ public function uploadDocument(Request $request): RedirectResponse
     $documentFieldMapping = [
         'qualification' => 'qualification_document',
         'cv' => 'cv_document',
-        'banking_statement' => 'banking_statement',      // NOT banking_statement_document
-        'id_document' => 'id_document',                  // NOT id_document_document
-        'proof_of_residence' => 'proof_of_residence'    // NOT proof_of_residence_document
+        'banking_statement' => 'banking_statement',     
+        'id_document' => 'id_document',                  
+        'proof_of_residence' => 'proof_of_residence'   
     ];
     
     $documentField = $documentFieldMapping[$documentType];
@@ -202,198 +202,260 @@ public function deleteDocument(Request $request): RedirectResponse
 }
 
     /**
-     * Initiate banking verification through API
-     */
-    public function initiateBankVerification(Request $request): RedirectResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'bank_account_number' => 'required|string|max:20',
-            'id_number' => 'required|string|max:13',
+ * Initiate banking verification through API
+ */
+public function initiateBankVerification(Request $request): RedirectResponse
+{
+    $validator = Validator::make($request->all(), [
+        'bank_name' => 'required|string',
+        'account_type' => 'required|string|in:savings,current,cheque',
+        'bank_account_number' => 'required|string|max:20',
+        'bank_branch_code' => 'nullable|string|max:10',
+        'account_holder_name' => 'required|string|max:100',
+        'id_number' => 'required|string|max:13',
+    ]);
+
+    if ($validator->fails()) {
+        return Redirect::route('profile.edit')->withErrors($validator, 'bankingDetails');
+    }
+
+    $user = $request->user();
+    
+    try {
+        $bankingApiResponse = $this->callBankingVerificationAPI([
+            'bank_name' => $request->input('bank_name'),
+            'account_type' => $request->input('account_type'),
+            'account_number' => $request->input('bank_account_number'),
+            'branch_code' => $request->input('bank_branch_code'),
+            'account_holder_name' => $request->input('account_holder_name'),
+            'id_number' => $request->input('id_number'),
+            'user_id' => $user->id,
+            'mobile' => $user->phone_number,
+            'email' => $user->email,
         ]);
 
-        if ($validator->fails()) {
-            return Redirect::route('profile.edit')->withErrors($validator, 'bankingVerification');
+        // Update user with verification status and banking details
+        $user->update([
+            'bank_name' => $request->input('bank_name'),
+            'account_type' => $request->input('account_type'),
+            'bank_account_number' => $request->input('bank_account_number'),
+            'bank_branch_code' => $request->input('bank_branch_code'),
+            'account_holder_name' => $request->input('account_holder_name'),
+            'banking_verification_status' => $bankingApiResponse['status'],
+            'banking_verification_reference' => $bankingApiResponse['reference'] ?? null,
+            'banking_verified_at' => $bankingApiResponse['status'] === 'verified' ? now() : null,
+        ]);
+
+        $message = match($bankingApiResponse['status']) {
+            'verified' => 'Bank account verified successfully!',
+            'pending' => 'Bank verification initiated. You will be notified once complete.',
+            'failed' => 'Bank verification failed. Please check your details and try again.',
+            default => 'Bank verification request submitted.'
+        };
+
+        return Redirect::route('profile.edit')->with('status', 'banking-updated')->with('message', $message);
+
+    } catch (\Exception $e) {
+        Log::error('Banking API Error: ' . $e->getMessage());
+        return Redirect::route('profile.edit')->withErrors(['banking_api' => 'Banking verification service is temporarily unavailable. Please try again later.'], 'bankingDetails');
+    }
+}
+
+/**
+ * Handle banking API webhook callback
+ */
+public function bankingWebhookCallback(Request $request)
+{
+    try {
+        // Validate webhook signature
+        $signature = $request->header('X-Banking-Signature');
+        if (!$this->validateWebhookSignature($signature, $request->getContent())) {
+            Log::warning('Invalid webhook signature received');
+            return response()->json(['error' => 'Invalid signature'], 403);
         }
 
-        $user = $request->user();
+        $data = $request->json()->all();
         
-        try {
-            $bankingApiResponse = $this->callBankingVerificationAPI([
-                'account_number' => $request->input('bank_account_number'),
-                'id_number' => $request->input('id_number'),
-                'user_id' => $user->id,
-            ]);
+        // Find user by reference
+        $user = User::where('banking_verification_reference', $data['reference'])->first();
+        
+        if (!$user) {
+            Log::warning('Webhook received for unknown reference', ['reference' => $data['reference']]);
+            return response()->json(['error' => 'User not found'], 404);
+        }
 
-            // Update user with verification status
-            $user->update([
-                'bank_account_number' => $request->input('bank_account_number'),
-                'banking_verification_status' => $bankingApiResponse['status'],
-                'banking_verification_reference' => $bankingApiResponse['reference'] ?? null,
-                'banking_verified_at' => $bankingApiResponse['status'] === 'verified' ? now() : null,
-                'account_holder_name' => $bankingApiResponse['account_holder_name'] ?? null,
-                'bank_name' => $bankingApiResponse['bank_name'] ?? null,
-            ]);
-
-            $message = match($bankingApiResponse['status']) {
-                'verified' => 'Bank account verified successfully!',
-                'pending' => 'Bank verification initiated. You will be notified once complete.',
-                'failed' => 'Bank verification failed. Please check your details and try again.',
-                default => 'Bank verification request submitted.'
+        // Determine status from API response
+        $status = 'pending';
+        if (isset($data['Status'])) {
+            $status = match(strtolower($data['Status'])) {
+                'success', 'verified' => 'verified',
+                'failed', 'error' => 'failed',
+                default => 'pending'
             };
-
-            return Redirect::route('profile.edit')->with('status', 'banking-verification-initiated')->with('message', $message);
-
-        } catch (\Exception $e) {
-            Log::error('Banking API Error: ' . $e->getMessage());
-            return Redirect::route('profile.edit')->withErrors(['banking_api' => 'Banking verification service is temporarily unavailable. Please try again later.'], 'bankingVerification');
-        }
-    }
-
-    /**
-     * Handle banking API webhook callback
-     */
-    public function bankingWebhookCallback(Request $request)
-    {
-        try {
-            // Validate webhook signature
-            $signature = $request->header('X-Banking-Signature');
-            if (!$this->validateWebhookSignature($signature, $request->getContent())) {
-                Log::warning('Invalid webhook signature received');
-                return response()->json(['error' => 'Invalid signature'], 403);
-            }
-
-            $data = $request->json()->all();
-            
-            // Find user by reference
-            $user = User::where('banking_verification_reference', $data['reference'])->first();
-            
-            if (!$user) {
-                Log::warning('Webhook received for unknown reference', ['reference' => $data['reference']]);
-                return response()->json(['error' => 'User not found'], 404);
-            }
-
-            // Update verification status
-            $user->update([
-                'banking_verification_status' => $data['status'],
-                'banking_verified_at' => $data['status'] === 'verified' ? now() : null,
-                'bank_name' => $data['bank_name'] ?? $user->bank_name,
-                'account_holder_name' => $data['account_holder_name'] ?? $user->account_holder_name,
-            ]);
-
-            Log::info('Banking verification webhook processed', [
-                'user_id' => $user->id,
-                'status' => $data['status'],
-                'reference' => $data['reference']
-            ]);
-
-            return response()->json(['status' => 'success']);
-
-        } catch (\Exception $e) {
-            Log::error('Webhook processing failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Processing failed'], 500);
-        }
-    }
-
-    /**
-     * Call external banking verification API
-     */
-    private function callBankingVerificationAPI(array $data): array
-    {
-        $apiUrl = config('services.banking_api.url');
-        $apiKey = config('services.banking_api.key');
-
-        // If no API configured, return pending status for development
-        if (empty($apiUrl) || empty($apiKey)) {
-            Log::info('Banking API not configured, returning pending status');
-            return [
-                'status' => 'pending',
-                'reference' => 'DEV_REF_' . time(),
-                'message' => 'Verification initiated (development mode)'
-            ];
         }
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $apiKey,
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-        ])->timeout(30)->post($apiUrl . '/verify-account', [
-            'account_number' => $data['account_number'],
-            'id_number' => $data['id_number'],
-            'callback_url' => route('banking.webhook'),
-            'user_reference' => $data['user_id'],
+        // Update verification status
+        $user->update([
+            'banking_verification_status' => $status,
+            'banking_verified_at' => $status === 'verified' ? now() : null,
+            // Update additional fields if provided in Output
+            'account_holder_name' => $data['Output']['AccountHolderName'] ?? $user->account_holder_name,
         ]);
 
-        if ($response->failed()) {
-            Log::error('Banking API request failed', [
-                'status' => $response->status(),
-                'body' => $response->body()
-            ]);
-            throw new \Exception('Banking API request failed: ' . $response->body());
-        }
-
-        $responseData = $response->json();
-        
-        Log::info('Banking API response received', $responseData);
-
-        return $responseData;
-    }
-
-    /**
-     * Validate webhook signature
-     */
-    private function validateWebhookSignature(?string $signature, string $payload): bool
-    {
-        if (!$signature) {
-            return false;
-        }
-
-        $webhookSecret = config('services.banking_api.webhook_secret');
-        if (!$webhookSecret) {
-            Log::warning('Banking webhook secret not configured');
-            return true; // Allow in development
-        }
-
-        $expectedSignature = 'sha256=' . hash_hmac('sha256', $payload, $webhookSecret);
-        return hash_equals($signature, $expectedSignature);
-    }
-
-    /**
-     * Retry failed bank verification
-     */
-    public function retryBankVerification(Request $request): RedirectResponse
-    {
-        $user = $request->user();
-        
-        if ($user->banking_verification_status !== 'failed') {
-            return Redirect::route('profile.edit')->withErrors(['banking_retry' => 'No failed verification to retry.']);
-        }
-
-        return $this->initiateBankVerification($request);
-    }
-
-    /**
-     * Update additional learner information
-     */
-    public function updateLearnerInfo(Request $request): RedirectResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'phone_number' => 'nullable|string|max:15',
-            'date_of_birth' => 'nullable|date|before:today',
-            'physical_address' => 'nullable|string|max:500',
-            'emergency_contact_name' => 'nullable|string|max:100',
-            'emergency_contact_phone' => 'nullable|string|max:15',
-            'education_level' => 'nullable|in:matric,diploma,degree,postgraduate,other',
+        Log::info('Banking verification webhook processed', [
+            'user_id' => $user->id,
+            'status' => $status,
+            'reference' => $data['reference']
         ]);
 
-        if ($validator->fails()) {
-            return Redirect::route('profile.edit')->withErrors($validator, 'learnerInfo');
-        }
+        return response()->json(['status' => 'success']);
 
-        $user = $request->user();
-        $user->update($validator->validated());
-
-        return Redirect::route('profile.edit')->with('status', 'learner-info-updated');
+    } catch (\Exception $e) {
+        Log::error('Webhook processing failed: ' . $e->getMessage());
+        return response()->json(['error' => 'Processing failed'], 500);
     }
+}
+
+/**
+ * Call external banking verification API
+ */
+private function callBankingVerificationAPI(array $data): array
+{
+    $apiUrl = config('services.banking_api.url');
+    $clientId = config('services.banking_api.client_id');
+    $password = config('services.banking_api.password');
+
+    // If no API configured, return pending status for development
+    if (empty($apiUrl) || empty($clientId) || empty($password)) {
+        Log::info('Banking API not configured, returning pending status');
+        return [
+            'status' => 'pending',
+            'reference' => 'DEV_REF_' . time(),
+            'message' => 'Verification initiated (development mode)'
+        ];
+    }
+
+    // Extract initials from full name
+    $nameParts = explode(' ', trim($data['account_holder_name']));
+    $initials = '';
+    foreach ($nameParts as $part) {
+        if (!empty($part)) {
+            $initials .= strtoupper(substr($part, 0, 1));
+        }
+    }
+
+    // Generate unique reference
+    $reference = 'BV_' . $data['user_id'] . '_' . time();
+
+    $requestPayload = [
+        'Input' => [
+            'AccountNumber' => $data['account_number'],
+            'BranchCode' => $data['branch_code'] ?? '',
+            'AccountType' => $data['account_type'],
+            'IdCrNumber' => $data['id_number'],
+            'Name' => $data['account_holder_name'],
+            'Initials' => $initials,
+            'Mobile' => $data['mobile'] ?? '',
+            'Email' => $data['email'] ?? '',
+            'Reference' => $reference,
+        ],
+        'ClientID' => $clientId,
+        'Password' => $password,
+    ];
+
+    $response = Http::withHeaders([
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+    ])->timeout(30)->post($apiUrl, $requestPayload);
+
+    if ($response->failed()) {
+        Log::error('Banking API request failed', [
+            'status' => $response->status(),
+            'body' => $response->body(),
+            'request' => $requestPayload
+        ]);
+        throw new \Exception('Banking API request failed: ' . $response->body());
+    }
+
+    $responseData = $response->json();
+    
+    Log::info('Banking API response received', $responseData);
+
+    // Map API response to internal format
+    $status = 'pending';
+    if (isset($responseData['Status'])) {
+        $status = match(strtolower($responseData['Status'])) {
+            'success' => 'verified',
+            'pending' => 'pending',
+            'failed', 'error' => 'failed',
+            default => 'pending'
+        };
+    }
+
+    return [
+        'status' => $status,
+        'reference' => $reference,
+        'api_response' => $responseData,
+        'message' => $responseData['Description'] ?? 'Verification request processed'
+    ];
+}
+
+/**
+ * Validate webhook signature
+ */
+private function validateWebhookSignature(?string $signature, string $payload): bool
+{
+    if (!$signature) {
+        return false;
+    }
+
+    $webhookSecret = config('services.banking_api.webhook_secret');
+    if (!$webhookSecret) {
+        Log::warning('Banking webhook secret not configured');
+        return true; // Allow in development
+    }
+
+    $expectedSignature = 'sha256=' . hash_hmac('sha256', $payload, $webhookSecret);
+    return hash_equals($signature, $expectedSignature);
+}
+
+/**
+ * Retry failed bank verification
+ */
+public function retryBankVerification(Request $request): RedirectResponse
+{
+    $user = $request->user();
+    
+    if ($user->banking_verification_status !== 'failed') {
+        return Redirect::route('profile.edit')->withErrors(['banking_retry' => 'No failed verification to retry.']);
+    }
+
+    return $this->initiateBankVerification($request);
+}
+
+/**
+ * Update additional learner information
+ */
+public function updateLearnerInfo(Request $request): RedirectResponse
+{
+    $validator = Validator::make($request->all(), [
+        'phone_number' => 'nullable|string|max:15',
+        'date_of_birth' => 'nullable|date|before:today',
+        'physical_address' => 'nullable|string|max:500',
+        'emergency_contact_name' => 'nullable|string|max:100',
+        'emergency_contact_phone' => 'nullable|string|max:15',
+        'education_level' => 'nullable|in:matric,diploma,degree,postgraduate,other',
+    ]);
+
+    if ($validator->fails()) {
+        return Redirect::route('profile.edit')->withErrors($validator, 'learnerInfo');
+    }
+
+    $user = $request->user();
+    $user->update($validator->validated());
+
+    return Redirect::route('profile.edit')->with('status', 'learner-info-updated');
+}
 
     /**
      * Delete the user's account.

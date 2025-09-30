@@ -17,9 +17,20 @@
         </div>
     </header>
 
+    <!-- CSS at the top to force button styles since the button color isnt working like it should -->
+    <style>
+    button[type="submit"].bg-green-600 {
+        background-color: #16a34a !important;
+        color: white !important;
+    }
+    button[type="submit"].bg-green-600:hover {
+        background-color: #15803d !important;
+    }
+    </style>
+
     <!-- Success/Error Messages -->
     @if (session('status') === 'document-uploaded')
-        <div class="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+        <div id="flash-message" class="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
             <div class="flex items-center">
                 <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
@@ -34,8 +45,6 @@
                 </div>
             </div>
         </div>
-        
-    
     @endif
 
     @if (session('status') === 'document-deleted')
@@ -125,19 +134,17 @@
                 </button>
             </div>
         </form>
-        <script>
-        // Auto-hide flash message after 5 seconds
-        setTimeout(() => {
-            const flash = document.getElementById('flash-message');
-            if (flash) {
-                flash.style.opacity = '0';
-                setTimeout(() => flash.remove(), 500); // Wait for fade-out transition
-            }
-        }, 5000);
-    </script>
+         
+            @if (session('status') === 'document-info-updated')
+                <div class="flex items-center text-green-600 dark:text-green-400 animate-fade-in">
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-sm font-medium">{{ __('Document updated successfully!') }}</span>
+                </div>
+            @endif
     </div>
     
-
     <!-- Document Status Table -->
     <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-600">

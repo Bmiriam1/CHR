@@ -35,10 +35,14 @@ return [
         ],
     ],
     
-    'banking_api' => [
-        'url' => env('BANKING_API_URL'),
-        'key' => env('BANKING_API_KEY'),
-        'webhook_secret' => env('BANKING_WEBHOOK_SECRET'),
+    
+    'avs_realtime' => [
+        'url' => env('AVS_REALTIME_API_URL'),
+        'client_id' => env('AVS_REALTIME_CLIENT_ID'),
+        'password' => env('AVS_REALTIME_PASSWORD'),
+        'webhook_secret' => env('AVS_REALTIME_WEBHOOK_SECRET'),
+        'timeout' => env('AVS_REALTIME_TIMEOUT', 45),
     ],
+
 
 ];

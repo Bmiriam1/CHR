@@ -201,8 +201,8 @@ public function deleteDocument(Request $request): RedirectResponse
     }
 }
 
-    /**
- * Initiate banking verification through API
+/**
+ * Initiate banking verification through AVSRealtime API
  */
 public function initiateBankVerification(Request $request): RedirectResponse
 {
@@ -230,7 +230,7 @@ public function initiateBankVerification(Request $request): RedirectResponse
             'account_holder_name' => $request->input('account_holder_name'),
             'id_number' => $request->input('id_number'),
             'user_id' => $user->id,
-            'mobile' => $user->phone_number,
+            'mobile' => $user->phone_number ?? $user->phone,
             'email' => $user->email,
         ]);
 
@@ -238,12 +238,17 @@ public function initiateBankVerification(Request $request): RedirectResponse
         $user->update([
             'bank_name' => $request->input('bank_name'),
             'account_type' => $request->input('account_type'),
+            'bank_account_type' => $request->input('account_type'), // Also update bank_account_type
             'bank_account_number' => $request->input('bank_account_number'),
             'bank_branch_code' => $request->input('bank_branch_code'),
             'account_holder_name' => $request->input('account_holder_name'),
+            'bank_account_holder' => $request->input('account_holder_name'),
             'banking_verification_status' => $bankingApiResponse['status'],
             'banking_verification_reference' => $bankingApiResponse['reference'] ?? null,
             'banking_verified_at' => $bankingApiResponse['status'] === 'verified' ? now() : null,
+            'banking_verified' => $bankingApiResponse['status'] === 'verified',
+            'avs_bank_name' => $bankingApiResponse['additional_info']['bank_name'] ?? null,
+            'avs_account_status' => $bankingApiResponse['additional_info']['account_status'] ?? null,
         ]);
 
         $message = match($bankingApiResponse['status']) {
@@ -256,8 +261,8 @@ public function initiateBankVerification(Request $request): RedirectResponse
         return Redirect::route('profile.edit')->with('status', 'banking-updated')->with('message', $message);
 
     } catch (\Exception $e) {
-        Log::error('Banking API Error: ' . $e->getMessage());
-        return Redirect::route('profile.edit')->withErrors(['banking_api' => 'Banking verification service is temporarily unavailable. Please try again later.'], 'bankingDetails');
+        Log::error('AVSRealtime API Error: ' . $e->getMessage());
+        return Redirect::route('profile.edit')->withErrors(['banking_api' => 'AVSRealtime verification service is temporarily unavailable. Please try again later.'], 'bankingDetails');
     }
 }
 
@@ -284,12 +289,12 @@ public function bankingWebhookCallback(Request $request)
             return response()->json(['error' => 'User not found'], 404);
         }
 
-        // Determine status from API response
+        // Determine status from AVSRealtime API response
         $status = 'pending';
         if (isset($data['Status'])) {
             $status = match(strtolower($data['Status'])) {
-                'success', 'verified' => 'verified',
-                'failed', 'error' => 'failed',
+                'success', 'verified', 'match' => 'verified',
+                'failed', 'error', 'no match', 'nomatch' => 'failed',
                 default => 'pending'
             };
         }
@@ -298,8 +303,10 @@ public function bankingWebhookCallback(Request $request)
         $user->update([
             'banking_verification_status' => $status,
             'banking_verified_at' => $status === 'verified' ? now() : null,
-            // Update additional fields if provided in Output
+            'banking_verified' => $status === 'verified',
             'account_holder_name' => $data['Output']['AccountHolderName'] ?? $user->account_holder_name,
+            'avs_bank_name' => $data['Output']['BankName'] ?? $user->avs_bank_name,
+            'avs_account_status' => $data['Output']['AccountStatus'] ?? $user->avs_account_status,
         ]);
 
         Log::info('Banking verification webhook processed', [
@@ -317,43 +324,54 @@ public function bankingWebhookCallback(Request $request)
 }
 
 /**
- * Call external banking verification API
+ * Call AVSRealtime banking verification API
  */
 private function callBankingVerificationAPI(array $data): array
 {
-    $apiUrl = config('services.banking_api.url');
-    $clientId = config('services.banking_api.client_id');
-    $password = config('services.banking_api.password');
+    $apiUrl = config('services.avs_realtime.url');
+    $clientId = config('services.avs_realtime.client_id');
+    $password = config('services.avs_realtime.password');
+    $timeout = config('services.avs_realtime.timeout', 45);
 
     // If no API configured, return pending status for development
     if (empty($apiUrl) || empty($clientId) || empty($password)) {
-        Log::info('Banking API not configured, returning pending status');
+        Log::info('AVSRealtime API not configured, returning pending status');
         return [
             'status' => 'pending',
             'reference' => 'DEV_REF_' . time(),
-            'message' => 'Verification initiated (development mode)'
+            'message' => 'Verification initiated (development mode)',
+            'additional_info' => []
         ];
     }
 
-    // Extract initials from full name
+    // Extract initials from full name (AVS format)
     $nameParts = explode(' ', trim($data['account_holder_name']));
     $initials = '';
     foreach ($nameParts as $part) {
         if (!empty($part)) {
-            $initials .= strtoupper(substr($part, 0, 1));
+            $initials .= strtoupper(substr($part, 0, 1)) . '.';
         }
     }
+    $initials = rtrim($initials, '.');
 
-    // Generate unique reference
-    $reference = 'BV_' . $data['user_id'] . '_' . time();
+    // Generate unique reference for AVSRealtime
+    $reference = 'AVS_' . $data['user_id'] . '_' . time();
+
+    // Map account type to AVSRealtime format
+    $avsAccountType = match($data['account_type']) {
+        'savings' => 'Savings',
+        'current' => 'Current',
+        'cheque' => 'Cheque',
+        default => 'Current'
+    };
 
     $requestPayload = [
         'Input' => [
             'AccountNumber' => $data['account_number'],
-            'BranchCode' => $data['branch_code'] ?? '',
-            'AccountType' => $data['account_type'],
+            'BranchCode' => $data['branch_code'] ?? '000000',
+            'AccountType' => $avsAccountType,
             'IdCrNumber' => $data['id_number'],
-            'Name' => $data['account_holder_name'],
+            'Name' => strtoupper($data['account_holder_name']),
             'Initials' => $initials,
             'Mobile' => $data['mobile'] ?? '',
             'Email' => $data['email'] ?? '',
@@ -363,40 +381,64 @@ private function callBankingVerificationAPI(array $data): array
         'Password' => $password,
     ];
 
+    Log::info('AVSRealtime API request', [
+        'url' => $apiUrl,
+        'reference' => $reference,
+        'account_number_masked' => '****' . substr($data['account_number'], -4),
+    ]);
+
     $response = Http::withHeaders([
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-    ])->timeout(30)->post($apiUrl, $requestPayload);
+        'User-Agent' => 'Laravel-Banking-Verification/1.0',
+    ])->timeout($timeout)->post($apiUrl, $requestPayload);
 
     if ($response->failed()) {
-        Log::error('Banking API request failed', [
+        Log::error('AVSRealtime API request failed', [
             'status' => $response->status(),
             'body' => $response->body(),
-            'request' => $requestPayload
+            'reference' => $reference
         ]);
-        throw new \Exception('Banking API request failed: ' . $response->body());
+        throw new \Exception('AVSRealtime API request failed: ' . $response->status() . ' - ' . $response->body());
     }
 
     $responseData = $response->json();
     
-    Log::info('Banking API response received', $responseData);
+    Log::info('AVSRealtime API response received', [
+        'reference' => $reference,
+        'status' => $responseData['Status'] ?? 'unknown',
+        'description' => $responseData['Description'] ?? 'No description'
+    ]);
 
-    // Map API response to internal format
+    // Map AVSRealtime response to internal format
     $status = 'pending';
     if (isset($responseData['Status'])) {
         $status = match(strtolower($responseData['Status'])) {
-            'success' => 'verified',
-            'pending' => 'pending',
-            'failed', 'error' => 'failed',
+            'success', 'verified', 'match' => 'verified',
+            'pending', 'processing' => 'pending',
+            'failed', 'error', 'no match', 'nomatch' => 'failed',
             default => 'pending'
         };
+    }
+
+    // Extract additional info from Output if available
+    $outputData = $responseData['Output'] ?? [];
+    $additionalInfo = [];
+    
+    if (!empty($outputData)) {
+        $additionalInfo = [
+            'bank_name' => $outputData['BankName'] ?? null,
+            'account_holder_verified' => $outputData['AccountHolderMatch'] ?? null,
+            'account_status' => $outputData['AccountStatus'] ?? null,
+        ];
     }
 
     return [
         'status' => $status,
         'reference' => $reference,
         'api_response' => $responseData,
-        'message' => $responseData['Description'] ?? 'Verification request processed'
+        'message' => $responseData['Description'] ?? 'Verification request processed',
+        'additional_info' => $additionalInfo,
     ];
 }
 
@@ -409,9 +451,9 @@ private function validateWebhookSignature(?string $signature, string $payload): 
         return false;
     }
 
-    $webhookSecret = config('services.banking_api.webhook_secret');
+    $webhookSecret = config('services.avs_realtime.webhook_secret');
     if (!$webhookSecret) {
-        Log::warning('Banking webhook secret not configured');
+        Log::warning('AVSRealtime webhook secret not configured');
         return true; // Allow in development
     }
 
@@ -427,7 +469,7 @@ public function retryBankVerification(Request $request): RedirectResponse
     $user = $request->user();
     
     if ($user->banking_verification_status !== 'failed') {
-        return Redirect::route('profile.edit')->withErrors(['banking_retry' => 'No failed verification to retry.']);
+        return Redirect::route('profile.edit')->withErrors(['banking_retry' => 'No failed verification to retry.'], 'bankingDetails');
     }
 
     return $this->initiateBankVerification($request);

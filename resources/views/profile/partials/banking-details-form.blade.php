@@ -26,7 +26,7 @@
                 <label for="bank_name" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
                     {{ __('Bank Name') }} <span class="text-red-500">*</span>
                 </label>
-                <select id="bank_name" name="bank_name" 
+                <select id="bank_name" name="bank_name" required
                     class="block w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200">
                     <option value="">{{ __('Select Your Bank') }}</option>
                     <option value="ABSA Bank" {{ old('bank_name', $user->bank_name) == 'ABSA Bank' ? 'selected' : '' }}>ABSA Bank</option>
@@ -53,12 +53,12 @@
                 <label for="account_type" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
                     {{ __('Account Type') }} <span class="text-red-500">*</span>
                 </label>
-                <select id="account_type" name="account_type" 
+                <select id="account_type" name="account_type" required
                     class="block w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200">
                     <option value="">{{ __('Select Account Type') }}</option>
-                    <option value="savings" {{ old('account_type', $user->account_type) == 'savings' ? 'selected' : '' }}>{{ __('Savings Account') }}</option>
-                    <option value="current" {{ old('account_type', $user->account_type) == 'current' ? 'selected' : '' }}>{{ __('Current Account') }}</option>
-                    <option value="cheque" {{ old('account_type', $user->account_type) == 'cheque' ? 'selected' : '' }}>{{ __('Cheque Account') }}</option>
+                    <option value="savings" {{ old('account_type', $user->account_type ?? $user->bank_account_type) == 'savings' ? 'selected' : '' }}>{{ __('Savings Account') }}</option>
+                    <option value="current" {{ old('account_type', $user->account_type ?? $user->bank_account_type) == 'current' ? 'selected' : '' }}>{{ __('Current Account') }}</option>
+                    <option value="cheque" {{ old('account_type', $user->account_type ?? $user->bank_account_type) == 'cheque' ? 'selected' : '' }}>{{ __('Cheque Account') }}</option>
                 </select>
                 @if($errors->bankingDetails->has('account_type'))
                     <p class="text-sm text-red-600 dark:text-red-400 flex items-center space-x-1">
@@ -76,7 +76,7 @@
                 <label for="bank_account_number" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
                     {{ __('Account Number') }} <span class="text-red-500">*</span>
                 </label>
-                <input id="bank_account_number" name="bank_account_number" type="text" 
+                <input id="bank_account_number" name="bank_account_number" type="text" required
                     class="block w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200" 
                     value="{{ old('bank_account_number', $user->bank_account_number) }}" 
                     placeholder="Enter your account number">
@@ -108,27 +108,48 @@
                 @endif
             </div>
         </div>
-        
-        <div class="space-y-2">
-            <label for="account_holder_name" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                {{ __('Account Holder Name') }} <span class="text-red-500">*</span>
-            </label>
-            <input id="account_holder_name" name="account_holder_name" type="text" 
-                class="block w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200" 
-                value="{{ old('account_holder_name', $user->account_holder_name) }}" 
-                placeholder="Full name as it appears on bank account">
-            @if($errors->bankingDetails->has('account_holder_name'))
-                <p class="text-sm text-red-600 dark:text-red-400 flex items-center space-x-1">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                    </svg>
-                    <span>{{ $errors->bankingDetails->first('account_holder_name') }}</span>
-                </p>
-            @endif
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="space-y-2">
+                <label for="account_holder_name" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {{ __('Account Holder Name') }} <span class="text-red-500">*</span>
+                </label>
+                <input id="account_holder_name" name="account_holder_name" type="text" required
+                    class="block w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200" 
+                    value="{{ old('account_holder_name', $user->account_holder_name ?? $user->bank_account_holder) }}" 
+                    placeholder="Full name as it appears on bank account">
+                @if($errors->bankingDetails->has('account_holder_name'))
+                    <p class="text-sm text-red-600 dark:text-red-400 flex items-center space-x-1">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>{{ $errors->bankingDetails->first('account_holder_name') }}</span>
+                    </p>
+                @endif
+            </div>
+
+            <div class="space-y-2">
+                <label for="id_number" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {{ __('ID Number') }} <span class="text-red-500">*</span>
+                </label>
+                <input id="id_number" name="id_number" type="text" required
+                    class="block w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200" 
+                    value="{{ old('id_number', $user->id_number) }}" 
+                    placeholder="Enter your SA ID number"
+                    maxlength="13">
+                @if($errors->bankingDetails->has('id_number'))
+                    <p class="text-sm text-red-600 dark:text-red-400 flex items-center space-x-1">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>{{ $errors->bankingDetails->first('id_number') }}</span>
+                    </p>
+                @endif
+            </div>
         </div>
 
         <!-- Verification Status -->
-        @if($user->banking_verified)
+        @if($user->banking_verified || $user->banking_verification_status === 'verified')
             <div class="flex items-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

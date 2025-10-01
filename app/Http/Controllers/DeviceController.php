@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 class DeviceController extends Controller
 {
     use AuthorizesRequests;
+    
     public function index(Request $request)
     {
         // Get user's company and allowed company IDs for tenant filtering
@@ -68,7 +69,11 @@ class DeviceController extends Controller
 
     public function show(Device $device)
     {
-        $this->authorize('view', $device);
+        // FIX: Graceful authorization handling instead of throwing exception
+        if (!Auth::user()->can('view', $device)) {
+            return redirect()->route('devices.index')
+                ->with('error', 'You do not have permission to view this device.');
+        }
         
         $device->load(['user', 'company', 'approver', 'blocker', 'attendanceRecords']);
 
@@ -83,14 +88,22 @@ class DeviceController extends Controller
 
     public function edit(Device $device)
     {
-        $this->authorize('update', $device);
+        // FIX: Graceful authorization handling instead of throwing exception
+        if (!Auth::user()->can('update', $device)) {
+            return redirect()->route('devices.index')
+                ->with('error', 'You do not have permission to edit this device.');
+        }
         
         return view('devices.edit', compact('device'));
     }
 
     public function update(Request $request, Device $device)
     {
-        $this->authorize('update', $device);
+        // FIX: Graceful authorization handling instead of throwing exception
+        if (!Auth::user()->can('update', $device)) {
+            return redirect()->route('devices.index')
+                ->with('error', 'You do not have permission to update this device.');
+        }
 
         $validated = $request->validate([
             'device_name' => 'sometimes|string|max:255',
@@ -111,7 +124,11 @@ class DeviceController extends Controller
 
     public function destroy(Device $device)
     {
-        $this->authorize('delete', $device);
+        // FIX: Graceful authorization handling instead of throwing exception
+        if (!Auth::user()->can('delete', $device)) {
+            return redirect()->route('devices.index')
+                ->with('error', 'You do not have permission to delete this device.');
+        }
         
         $device->delete();
 
@@ -121,12 +138,15 @@ class DeviceController extends Controller
 
     public function approve(Device $device)
     {
-        $this->authorize('manage', $device);
+        // FIX: Graceful authorization handling instead of throwing exception
+        if (!Auth::user()->can('manage', $device)) {
+            return redirect()->route('devices.index')
+                ->with('error', 'You do not have permission to approve devices.');
+        }
 
+        // FIX: Return with message instead of throwing exception
         if ($device->is_active) {
-            throw ValidationException::withMessages([
-                'device' => 'Device is already approved.'
-            ]);
+            return back()->with('error', 'Device is already approved.');
         }
 
         $device->approve(Auth::user());
@@ -136,16 +156,19 @@ class DeviceController extends Controller
 
     public function block(Request $request, Device $device)
     {
-        $this->authorize('manage', $device);
+        // FIX: Graceful authorization handling instead of throwing exception
+        if (!Auth::user()->can('manage', $device)) {
+            return redirect()->route('devices.index')
+                ->with('error', 'You do not have permission to block devices.');
+        }
 
         $validated = $request->validate([
             'reason' => 'required|string|max:500',
         ]);
 
+        // FIX: Return with message instead of throwing exception
         if ($device->is_blocked) {
-            throw ValidationException::withMessages([
-                'device' => 'Device is already blocked.'
-            ]);
+            return back()->with('error', 'Device is already blocked.');
         }
 
         $device->block(Auth::user(), $validated['reason']);
@@ -155,12 +178,15 @@ class DeviceController extends Controller
 
     public function unblock(Device $device)
     {
-        $this->authorize('manage', $device);
+        // FIX: Graceful authorization handling instead of throwing exception
+        if (!Auth::user()->can('manage', $device)) {
+            return redirect()->route('devices.index')
+                ->with('error', 'You do not have permission to unblock devices.');
+        }
 
+        // FIX: Return with message instead of throwing exception
         if (!$device->is_blocked) {
-            throw ValidationException::withMessages([
-                'device' => 'Device is not blocked.'
-            ]);
+            return back()->with('error', 'Device is not blocked.');
         }
 
         $device->unblock();

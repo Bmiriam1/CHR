@@ -41,19 +41,27 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
-    {
-        $user = $request->user();
-        $user->fill($request->validated());
+  public function update(ProfileUpdateRequest $request): RedirectResponse
+{
+    $user = $request->user();
 
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
-        }
+    // Fill the user with validated data
+    $validated = $request->validated();
+    $user->first_name = $validated['first_name'];
+    $user->last_name = $validated['last_name'];
+    $user->email = $validated['email'];
 
-        $user->save();
-
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    // Check if the email is being changed and reset the email_verified_at field
+    if ($user->isDirty('email')) {
+        $user->email_verified_at = null;
     }
+
+    // Save the updated user information
+    $user->save();
+
+    return Redirect::route('profile.edit')->with('status', 'profile-updated');
+}
+
 
     /**
  * Upload learner documents - FIXED VERSION

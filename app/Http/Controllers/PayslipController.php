@@ -9,6 +9,7 @@ use App\Models\Program;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PayslipController extends Controller
 {
@@ -21,6 +22,11 @@ class PayslipController extends Controller
                 'payslips' => collect(),
                 'message' => 'Please contact your administrator to assign you to a company.'
             ]);
+        }
+
+        // Check if user is a learner
+        if ($user->hasRole('learner')) {
+            return $this->learnerIndex();
         }
 
         $payslips = Payslip::with(['user', 'program'])
@@ -38,9 +44,53 @@ class PayslipController extends Controller
         return view('payslips.index', compact('payslips', 'stats'));
     }
 
+    /**
+     * Learner-specific payslip index
+     */
+    public function learnerIndex()
+    {
+        $user = Auth::user();
+
+        // Get payslips for the authenticated learner
+        $payslips = Payslip::with(['program'])
+            ->where('user_id', $user->id)
+            ->orderBy('payroll_period_start', 'desc')
+            ->paginate(15);
+
+        // Calculate learner stats
+        $stats = [
+            'total_earnings' => Payslip::where('user_id', $user->id)
+                ->where('status', 'paid')
+                ->sum('net_pay'),
+            'total_payslips' => Payslip::where('user_id', $user->id)->count(),
+            'ytd_earnings' => Payslip::where('user_id', $user->id)
+                ->whereYear('pay_date', now()->year)
+                ->where('status', 'paid')
+                ->sum('net_pay'),
+            'ytd_tax' => Payslip::where('user_id', $user->id)
+                ->whereYear('pay_date', now()->year)
+                ->sum('paye_tax'),
+        ];
+
+        return view('payslips.learner-index', compact('payslips', 'stats'));
+    }
+
     public function show(Payslip $payslip)
     {
-        $payslip->load(['user', 'program', 'createdBy', 'approvedBy']);
+        // Authorization check
+        $user = Auth::user();
+        
+        if ($user->hasRole('learner') && $payslip->user_id !== $user->id) {
+            abort(403, 'Unauthorized access to this payslip.');
+        }
+
+        $payslip->load(['user', 'program',  'approvedBy']);
+        
+        // Choose appropriate view based on user role
+        if ($user->hasRole('learner')) {
+            return view('payslips.learner-show', compact('payslip'));
+        }
+        
         return view('payslips.show', compact('payslip'));
     }
 
@@ -144,16 +194,101 @@ class PayslipController extends Controller
         return view('payslips.generate');
     }
 
-   public function download(Payslip $payslip)
-{
-    // Example: if payslip has a stored PDF path
-    if ($payslip->pdf_path && file_exists(storage_path('app/' . $payslip->pdf_path))) {
-        return response()->download(storage_path('app/' . $payslip->pdf_path));
+    public function download(Payslip $payslip, Request $request)
+    {
+        // Authorization check
+        $user = Auth::user();
+        
+        if ($user->hasRole('learner') && $payslip->user_id !== $user->id) {
+            abort(403, 'Unauthorized access to this payslip.');
+        }
+
+        $format = $request->get('format', 'pdf');
+
+        if ($format === 'csv') {
+            return $this->downloadCsv($payslip);
+        }
+
+        return $this->downloadPdf($payslip);
     }
 
-    // Or generate dynamically if you don’t store files
-    return back()->with('error', 'Payslip file not found.');
-}
+    /**
+     * Generate and download PDF payslip
+     */
+    protected function downloadPdf(Payslip $payslip)
+    {
+        $payslip->load(['user', 'program', 'company']);
+
+        $pdf = Pdf::loadView('payslips.pdf', compact('payslip'))
+            ->setPaper('a4', 'portrait');
+
+        $filename = 'payslip-' . $payslip->user->employee_code . '-' . $payslip->payroll_period_start->format('Y-m') . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Generate and download CSV payslip
+     */
+    protected function downloadCsv(Payslip $payslip)
+    {
+        $payslip->load(['user', 'program']);
+
+        $filename = 'payslip-' . $payslip->user->employee_code . '-' . $payslip->payroll_period_start->format('Y-m') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($payslip) {
+            $file = fopen('php://output', 'w');
+
+            // Header row
+            fputcsv($file, [
+                'Employee Code',
+                'Employee Name',
+                'ID Number',
+                'Pay Period Start',
+                'Pay Period End',
+                'Pay Date',
+                'Days Worked',
+                'Basic Earnings',
+                'Transport Allowance',
+                'Meal Allowance',
+                'Gross Earnings',
+                'UIF Deduction',
+                'PAYE Deduction',
+                'Total Deductions',
+                'Net Pay',
+                'Status'
+            ]);
+
+            // Data row
+            fputcsv($file, [
+                $payslip->user->employee_code,
+                $payslip->user->first_name . ' ' . $payslip->user->last_name,
+                $payslip->user->id_number,
+                $payslip->payroll_period_start->format('Y-m-d'),
+                $payslip->payroll_period_end->format('Y-m-d'),
+                $payslip->pay_date->format('Y-m-d'),
+                $payslip->days_worked,
+                $payslip->basic_earnings,
+                $payslip->transport_allowance,
+                $payslip->meal_allowance,
+                $payslip->gross_earnings,
+                $payslip->uif_employee,
+                $payslip->paye_tax,
+                $payslip->total_deductions,
+                $payslip->net_pay,
+                ucfirst($payslip->status)
+            ]);
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 
     public function approve(Payslip $payslip)
     {

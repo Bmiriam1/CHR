@@ -51,11 +51,26 @@ class PayslipController extends Controller
     {
         $user = Auth::user();
 
-        // Get payslips for the authenticated learner
-        $payslips = Payslip::with(['program'])
+        // Build query for learner's payslips
+        $query = Payslip::with(['program'])
             ->where('user_id', $user->id)
-            ->orderBy('payroll_period_start', 'desc')
-            ->paginate(15);
+            ->orderBy('payroll_period_start', 'desc');
+
+        // Apply date range filter
+        if (request('from_date')) {
+            $query->where('payroll_period_start', '>=', request('from_date'));
+        }
+
+        if (request('to_date')) {
+            $query->where('payroll_period_end', '<=', request('to_date'));
+        }
+
+        // Apply program filter
+        if (request('program_id')) {
+            $query->where('program_id', request('program_id'));
+        }
+
+        $payslips = $query->paginate(15);
 
         // Calculate learner stats
         $stats = [
@@ -84,7 +99,7 @@ class PayslipController extends Controller
             abort(403, 'Unauthorized access to this payslip.');
         }
 
-        $payslip->load(['user', 'program',  'approvedBy']);
+        $payslip->load(['user', 'program', 'approvedBy']);
         
         // Choose appropriate view based on user role
         if ($user->hasRole('learner')) {

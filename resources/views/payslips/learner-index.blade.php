@@ -201,21 +201,44 @@
                                             </td>
                                             <td class="whitespace-nowrap px-4 py-3 sm:px-5">
                                                 <div class="flex space-x-2">
+                                                    <!-- View Details -->
                                                     <a href="{{ route('payslips.show', $payslip) }}"
                                                         class="btn h-8 w-8 rounded-full p-0 hover:bg-slate-300/20 focus:bg-slate-300/20 active:bg-slate-300/25 dark:hover:bg-navy-300/20 dark:focus:bg-navy-300/20 dark:active:bg-navy-300/25"
                                                         title="View Details">
                                                         <i class="fa fa-eye"></i>
                                                     </a>
-                                                    <a href="{{ route('payslips.download', ['payslip' => $payslip, 'format' => 'pdf']) }}"
-                                                        class="btn h-8 w-8 rounded-full p-0 hover:bg-slate-300/20 focus:bg-slate-300/20 active:bg-slate-300/25 dark:hover:bg-navy-300/20 dark:focus:bg-navy-300/20 dark:active:bg-navy-300/25"
-                                                        title="Download PDF">
-                                                        <i class="fa fa-file-pdf text-error"></i>
-                                                    </a>
-                                                    <a href="{{ route('payslips.download', ['payslip' => $payslip, 'format' => 'csv']) }}"
-                                                        class="btn h-8 w-8 rounded-full p-0 hover:bg-slate-300/20 focus:bg-slate-300/20 active:bg-slate-300/25 dark:hover:bg-navy-300/20 dark:focus:bg-navy-300/20 dark:active:bg-navy-300/25"
-                                                        title="Download CSV">
-                                                        <i class="fa fa-file-csv text-success"></i>
-                                                    </a>
+                                                    
+                                                    <!-- Download Dropdown -->
+                                                    <div x-data="{ isExpanded: false }" class="inline-flex">
+                                                        <button @click="isExpanded = !isExpanded" @click.outside="isExpanded = false"
+                                                            class="btn h-8 w-8 rounded-full p-0 hover:bg-slate-300/20 focus:bg-slate-300/20 active:bg-slate-300/25 dark:hover:bg-navy-300/20 dark:focus:bg-navy-300/20 dark:active:bg-navy-300/25"
+                                                            title="Download Options">
+                                                            <i class="fa fa-download"></i>
+                                                        </button>
+
+                                                        <div x-show="isExpanded" 
+                                                            x-transition:enter="transition ease-out duration-100"
+                                                            x-transition:enter-start="opacity-0 scale-95"
+                                                            x-transition:enter-end="opacity-100 scale-100"
+                                                            x-transition:leave="transition ease-in duration-75"
+                                                            x-transition:leave-start="opacity-100 scale-100"
+                                                            x-transition:leave-end="opacity-0 scale-95"
+                                                            class="absolute z-10 mt-10 w-48 rounded-lg border border-slate-150 bg-white shadow-soft dark:border-navy-600 dark:bg-navy-700"
+                                                            style="display: none;">
+                                                            <div class="space-y-1 p-2">
+                                                                <a href="{{ route('payslips.download', ['payslip' => $payslip, 'format' => 'pdf']) }}"
+                                                                    class="flex items-center space-x-3 rounded-lg px-3 py-2 hover:bg-slate-150 dark:hover:bg-navy-600">
+                                                                    <i class="fa fa-file-pdf text-error"></i>
+                                                                    <span class="text-sm font-medium">Download PDF</span>
+                                                                </a>
+                                                                <a href="{{ route('payslips.download', ['payslip' => $payslip, 'format' => 'csv']) }}"
+                                                                    class="flex items-center space-x-3 rounded-lg px-3 py-2 hover:bg-slate-150 dark:hover:bg-navy-600">
+                                                                    <i class="fa fa-file-csv text-success"></i>
+                                                                    <span class="text-sm font-medium">Download CSV</span>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </td>
                                         </tr>

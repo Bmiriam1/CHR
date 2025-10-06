@@ -135,19 +135,20 @@ Route::post('/webhooks/banking', [ProfileController::class, 'bankingWebhookCallb
     Route::get('attendance/{attendance}/download-proof', [AttendanceController::class, 'downloadProof'])->name('attendance.download-proof');
 
     // Payslip Management
-    Route::resource('payslips', PayslipController::class);
-
-    // Distinct route names to avoid duplication
-    Route::get('payslips/{payslip}/download', [PayslipController::class, 'download'])
-     ->name('payslips.download'); //GET
-
-    Route::post('payslips/generate', [PayslipController::class, 'generate'])
-        ->name('payslips.generate');      // POST action
-
-    Route::patch('payslips/{payslip}/approve', [PayslipController::class, 'approve'])->name('payslips.approve');
-    Route::patch('payslips/{payslip}/mark-paid', [PayslipController::class, 'markAsPaid'])->name('payslips.mark-paid');
-    Route::get('payslips/{payslip}/download', [PayslipController::class, 'download'])->name('payslips.download');
-    Route::post('payslips/bulk-generate', [PayslipController::class, 'bulkGenerate'])->name('payslips.bulk-generate');
+Route::prefix('payslips')->name('payslips.')->group(function () {
+    // Routes accessible to all authenticated users (learners see only their own)
+    Route::get('/', [PayslipController::class, 'index'])->name('index');
+    Route::get('/{payslip}', [PayslipController::class, 'show'])->name('show');
+    Route::get('/{payslip}/download', [PayslipController::class, 'download'])->name('download');
+    
+    // Admin/HR only routes (for payslip generation and management)
+    Route::get('/generate/form', [PayslipController::class, 'generateForm'])->name('generate.form');
+    Route::post('/generate', [PayslipController::class, 'generate'])->name('generate');
+    Route::post('/bulk-generate', [PayslipController::class, 'bulkGenerate'])->name('bulk-generate');
+    Route::patch('/{payslip}/approve', [PayslipController::class, 'approve'])->name('approve');
+    Route::patch('/{payslip}/mark-paid', [PayslipController::class, 'markAsPaid'])->name('mark-paid');
+});
+    
 
     // Leave Management System
     Route::prefix('leave')->name('leave-requests.')->group(function () {
